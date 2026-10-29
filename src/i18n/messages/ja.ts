@@ -117,6 +117,7 @@ export const ja: Messages = {
   'checkout.cardName': 'カード名義',
   'checkout.cardNumber': 'カード番号',
   'checkout.cardExpiry': '有効期限（MM/YY）',
+  'checkout.cardExpiryPlaceholder': 'MM/YY',
   'checkout.cardCvc': 'セキュリティコード',
   'checkout.processing': '処理しています…',
   'checkout.pay': '{price}を支払う',

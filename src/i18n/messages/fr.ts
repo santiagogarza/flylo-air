@@ -117,6 +117,7 @@ export const fr: Messages = {
   'checkout.cardName': 'Nom sur la carte',
   'checkout.cardNumber': 'Numéro de carte',
   'checkout.cardExpiry': 'Expiration (MM/AA)',
+  'checkout.cardExpiryPlaceholder': 'MM/AA',
   'checkout.cardCvc': 'Code de sécurité',
   'checkout.processing': 'Traitement en cours…',
   'checkout.pay': 'Payer {price}',

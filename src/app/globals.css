@@ -256,7 +256,7 @@ a:hover {
   position: absolute;
   right: 0;
   top: calc(100% + 0.55rem);
-  width: 16.5rem;
+  width: 17.5rem;
   background: var(--surface);
   color: var(--ink);
   border: 1px solid var(--line);
@@ -425,7 +425,9 @@ html:lang(ja) h2,
 html:lang(ja) h3,
 html:lang(ja) .lead,
 html:lang(ja) .eyebrow,
-html:lang(ja) .page-head p {
+html:lang(ja) .page-head p,
+html:lang(ja) .currency-note,
+html:lang(ja) .locale-note {
   word-break: auto-phrase;
   text-wrap: balance;
 }

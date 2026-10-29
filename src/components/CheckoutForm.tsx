@@ -259,7 +259,7 @@ export function CheckoutForm({ flight, fare, passengers }: Props) {
                 id="card-expiry"
                 inputMode="numeric"
                 autoComplete="cc-exp"
-                placeholder="MM/YY"
+                placeholder={t('checkout.cardExpiryPlaceholder')}
                 value={card.expiry}
                 onChange={(event) => setCard({ ...card, expiry: formatExpiry(event.target.value) })}
               />

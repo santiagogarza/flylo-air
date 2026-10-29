@@ -115,6 +115,7 @@ export const en = {
   'checkout.cardName': 'Name on card',
   'checkout.cardNumber': 'Card number',
   'checkout.cardExpiry': 'Expiry (MM/YY)',
+  'checkout.cardExpiryPlaceholder': 'MM/YY',
   'checkout.cardCvc': 'Security code',
   'checkout.processing': 'Processing…',
   'checkout.pay': 'Pay {price}',
