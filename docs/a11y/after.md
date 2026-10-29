@@ -1,6 +1,6 @@
 # FlyLo-Air accessibility audit (after)
 
-- Generated: 2026-10-29T04:25:24.039Z
+- Generated: 2026-10-29T04:32:36.570Z
 - Engine: axe-core via @axe-core/playwright, tags `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`, `wcag22aa`, `best-practice`
 - Viewports: desktop 1280×800, mobile 390×844
 - Search date: 2026-11-12 (today + 14 days)
