@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { BagIcon, CheckIcon, CloseIcon, CoffeeIcon, PlaneIcon, SeatIcon } from '@/components/icons';
 import { Confetti, useCountUp, usePrefersReducedMotion } from '@/components/MilesVisuals';
 import { AIRPORTS } from '@/lib/airports';
@@ -30,7 +30,7 @@ type Props = {
 export function RedeemDialog({ open, initialReward, balance, onClose, onRedeem }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
     if (open && !dialog.open) {
