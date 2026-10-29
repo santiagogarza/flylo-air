@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
 import { LogoMark } from '@/components/icons';
+import { RouteFocus } from '@/components/RouteFocus';
 import { SiteNav } from '@/components/SiteNav';
 import './globals.css';
 
@@ -51,6 +52,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </p>
           </div>
         </footer>
+        <RouteFocus />
       </body>
     </html>
   );
