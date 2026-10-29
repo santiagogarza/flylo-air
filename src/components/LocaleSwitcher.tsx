@@ -8,7 +8,7 @@ import { LOCALE_CONFIG, LOCALES, type Locale } from '@/i18n/config';
 
 export function LocaleSwitcher() {
   const { t } = useI18n();
-  const { locale, pendingLocale, switching, setLocale } = useLocaleSwitch();
+  const { pendingLocale, switching, setLocale } = useLocaleSwitch();
   const pathname = usePathname() ?? '/';
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -44,13 +44,13 @@ export function LocaleSwitcher() {
 
   const choose = (next: Locale) => {
     close();
-    if (next !== locale) setLocale(next);
+    if (next !== pendingLocale) setLocale(next);
   };
 
   const onButtonKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
     if (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      openMenu(LOCALES.indexOf(locale));
+      openMenu(LOCALES.indexOf(pendingLocale));
     } else if (event.key === 'ArrowUp') {
       event.preventDefault();
       openMenu(LOCALES.length - 1);
@@ -85,8 +85,11 @@ export function LocaleSwitcher() {
         break;
       default:
         if (event.key.length === 1) {
-          const match = LOCALES.findIndex((code) => code.startsWith(event.key.toLowerCase()));
-          if (match >= 0) focusItem(match);
+          const key = event.key.toLowerCase();
+          const offset = LOCALES.slice(index + 1)
+            .concat(LOCALES.slice(0, index + 1))
+            .findIndex((code) => code.startsWith(key));
+          if (offset >= 0) focusItem(index + 1 + offset);
         }
     }
   };
@@ -102,7 +105,7 @@ export function LocaleSwitcher() {
         aria-controls={menuId}
         aria-label={t('locale.button', { name: current.nativeName })}
         aria-busy={switching || undefined}
-        onClick={() => (open ? close() : openMenu(LOCALES.indexOf(locale)))}
+        onClick={() => (open ? close() : openMenu(LOCALES.indexOf(pendingLocale)))}
         onKeyDown={onButtonKeyDown}
       >
         <GlobeIcon className={`locale-globe${switching ? ' is-spinning' : ''}`} />
