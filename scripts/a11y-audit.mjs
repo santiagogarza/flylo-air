@@ -286,7 +286,7 @@ async function startServer(serverPort, baseUrl) {
   while (Date.now() < deadline) {
     if (child.exitCode !== null) throw new Error(`next start exited with code ${child.exitCode}`);
     try {
-      const response = await fetch(baseUrl);
+      const response = await fetch(baseUrl, { signal: AbortSignal.timeout(2_000) });
       if (response.ok) return child;
     } catch {
       // not listening yet

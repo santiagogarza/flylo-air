@@ -39,6 +39,7 @@ export function CheckoutForm({ flight, fare, passengers }: Props) {
   const [bookingReference, setBookingReference] = useState('');
   const alertRef = useRef<HTMLDivElement>(null);
   const successRef = useRef<HTMLHeadingElement>(null);
+  const payingRef = useRef(false);
 
   useEffect(() => {
     if (status === 'booked') successRef.current?.focus();
@@ -65,7 +66,7 @@ export function CheckoutForm({ flight, fare, passengers }: Props) {
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (status === 'paying') return;
+    if (payingRef.current) return;
     const travelerErrors = travelers.map((traveler) => !traveler.firstName.trim() || !traveler.lastName.trim());
     const emailError = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ? undefined : 'Enter an email for your confirmation.';
     const cardErrors = validateCard(card);
@@ -77,6 +78,7 @@ export function CheckoutForm({ flight, fare, passengers }: Props) {
       return;
     }
 
+    payingRef.current = true;
     setStatus('paying');
     setMessage('');
     try {
@@ -104,6 +106,8 @@ export function CheckoutForm({ flight, fare, passengers }: Props) {
     } catch {
       setStatus('declined');
       setMessage('Payment could not be processed.');
+    } finally {
+      payingRef.current = false;
     }
     focusAlert();
   };
