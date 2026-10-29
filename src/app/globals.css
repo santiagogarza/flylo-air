@@ -18,6 +18,9 @@
   --bad-bg: #fef2f2;
   --fill: #fff7d6;
   --fill-line: #d97706;
+  --focus: #c2410c;
+  --focus-on-dark: #fcd34d;
+  --control-line: #7c8aa0;
   --radius: 14px;
   --radius-sm: 10px;
   --shadow: 0 10px 30px -12px rgba(11, 37, 69, 0.28), 0 2px 6px rgba(11, 37, 69, 0.06);
@@ -35,6 +38,8 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* Keeps focused elements clear of the sticky header. */
+  scroll-padding-top: 7rem;
 }
 
 body {
@@ -85,8 +90,19 @@ a:hover {
 }
 
 :focus-visible {
-  outline: 3px solid #f59e0b;
+  outline: 3px solid var(--focus);
   outline-offset: 2px;
+}
+
+.site-header :focus-visible,
+.site-footer :focus-visible,
+.hero :focus-visible,
+.page-head :focus-visible {
+  outline-color: var(--focus-on-dark);
+}
+
+main:focus {
+  outline: none;
 }
 
 .wrap {
@@ -173,6 +189,9 @@ a:hover {
 }
 
 .site-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
   color: #dbeafe;
   text-decoration: none;
   font-weight: 600;
@@ -182,9 +201,15 @@ a:hover {
 }
 
 .site-nav a:hover,
-.site-nav a[aria-current='page'] {
+.site-nav a[aria-current] {
   background: rgba(255, 255, 255, 0.12);
   color: #fff;
+}
+
+.site-nav a[aria-current] {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.35em;
 }
 
 /* Footer */
@@ -256,7 +281,8 @@ a:hover {
   transform: translateY(1px);
 }
 
-.btn:disabled {
+.btn:disabled,
+.btn[aria-disabled='true'] {
   opacity: 0.65;
   cursor: progress;
 }
@@ -288,6 +314,9 @@ a:hover {
 }
 
 .btn-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
   background: none;
   border: none;
   padding: 0;
@@ -447,6 +476,24 @@ textarea:focus {
   outline: none;
   border-color: var(--blue);
   box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.25);
+}
+
+.search-grid :is(input, select),
+.form-stack :is(input, select, textarea) {
+  border-color: var(--control-line);
+}
+
+.search-grid :is(input, select):focus-visible,
+.form-stack :is(input, select, textarea):focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 1px;
+  border-color: var(--blue);
+  box-shadow: none;
+}
+
+.form-stack ::placeholder {
+  color: #64748b;
+  opacity: 1;
 }
 
 .field.is-invalid input,
@@ -652,7 +699,7 @@ textarea:focus {
   gap: 0.15rem;
   text-align: center;
   text-decoration: none;
-  border: 1.5px solid var(--line);
+  border: 1.5px solid var(--control-line);
   border-radius: var(--radius-sm);
   padding: 0.75rem 0.5rem;
   color: var(--ink);
@@ -686,6 +733,13 @@ textarea:focus {
 .empty-state {
   text-align: center;
   padding: 3rem 1.5rem;
+}
+
+.edit-search {
+  cursor: pointer;
+  font-weight: 700;
+  padding: 0.65rem 0;
+  margin: -0.65rem 0;
 }
 
 @media (min-width: 860px) {
@@ -755,9 +809,27 @@ textarea:focus {
   margin-top: 1.25rem;
 }
 
-.traveler h3 {
+/* Floated so the legend sits inside the fieldset instead of on its top border. */
+.traveler-title {
+  float: left;
+  width: 100%;
+  padding: 0;
+  margin: 0 0 0.5rem;
   font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
   color: var(--ink-soft);
+}
+
+.traveler-title + * {
+  clear: both;
+}
+
+.form-note {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  margin: -0.5rem 0 1rem;
 }
 
 .summary-route {
@@ -807,6 +879,10 @@ textarea:focus {
   border: 1px solid;
 }
 
+.alert-focus {
+  border-radius: var(--radius-sm);
+}
+
 .alert p:last-child {
   margin-bottom: 0;
 }
@@ -819,6 +895,11 @@ textarea:focus {
 
 .alert-error strong {
   color: var(--bad);
+}
+
+.form-stack .alert-error a {
+  color: #7f1d1d;
+  font-weight: 600;
 }
 
 .alert-info {
@@ -1115,5 +1196,10 @@ textarea:focus {
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;
+  }
+
+  .deal:hover,
+  .btn:active {
+    transform: none;
   }
 }

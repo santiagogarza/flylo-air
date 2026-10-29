@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { cloneElement, useRef, useState } from 'react';
+import { cloneElement, useEffect, useRef, useState } from 'react';
 import { CheckIcon, LockIcon } from '@/components/icons';
 import { findAirport } from '@/lib/airports';
 import { formatDuration, formatTripDate, type Fare, type Flight } from '@/lib/flights';
@@ -39,6 +39,11 @@ export function CheckoutForm({ flight, fare, passengers }: Props) {
   const [bookingReference, setBookingReference] = useState('');
   const alertRef = useRef<HTMLDivElement>(null);
   const successRef = useRef<HTMLHeadingElement>(null);
+  const payingRef = useRef(false);
+
+  useEffect(() => {
+    if (status === 'booked') successRef.current?.focus();
+  }, [status]);
 
   const totalCents = quoteCents(fare, travelers.length);
   const taxesCents = toCents(fare.taxes) * travelers.length;
@@ -61,7 +66,7 @@ export function CheckoutForm({ flight, fare, passengers }: Props) {
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (status === 'paying') return;
+    if (payingRef.current) return;
     const travelerErrors = travelers.map((traveler) => !traveler.firstName.trim() || !traveler.lastName.trim());
     const emailError = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ? undefined : 'Enter an email for your confirmation.';
     const cardErrors = validateCard(card);
@@ -73,6 +78,7 @@ export function CheckoutForm({ flight, fare, passengers }: Props) {
       return;
     }
 
+    payingRef.current = true;
     setStatus('paying');
     setMessage('');
     try {
@@ -100,6 +106,8 @@ export function CheckoutForm({ flight, fare, passengers }: Props) {
     } catch {
       setStatus('declined');
       setMessage('Payment could not be processed.');
+    } finally {
+      payingRef.current = false;
     }
     focusAlert();
   };
@@ -110,9 +118,9 @@ export function CheckoutForm({ flight, fare, passengers }: Props) {
         <div className="success-icon">
           <CheckIcon className="btn-icon" />
         </div>
-        <h1 id="booked-title" tabIndex={-1} style={{ fontSize: '2rem' }}>
+        <h2 id="booked-title" ref={successRef} tabIndex={-1} style={{ fontSize: '2rem' }}>
           You&apos;re booked
-        </h1>
+        </h2>
         <p className="muted">Your booking reference</p>
         <p className="ref">{bookingReference}</p>
         <p>
@@ -134,16 +142,35 @@ export function CheckoutForm({ flight, fare, passengers }: Props) {
   }
 
   const showAlert = status === 'declined' || status === 'failed';
+  const fieldErrors = [
+    ...errors.travelers.flatMap((invalid, index) =>
+      invalid ? [{ id: `t${index}-${travelers[index]?.firstName.trim() ? 'last' : 'first'}`, text: `Traveler ${index + 1}: enter a first and last name.` }] : [],
+    ),
+    ...(errors.email ? [{ id: 'contact-email', text: errors.email }] : []),
+    ...(['name', 'number', 'expiry', 'cvc'] as const).flatMap((key) => {
+      const text = errors.card[key];
+      return text ? [{ id: `card-${key}`, text }] : [];
+    }),
+  ];
 
   return (
     <div className="checkout-layout">
       <form className="form-stack" onSubmit={onSubmit} noValidate aria-label="Checkout">
-        <div ref={alertRef} tabIndex={-1} aria-live="assertive">
+        <div ref={alertRef} tabIndex={-1} className="alert-focus">
           {showAlert && (
             <div className="alert alert-error" role="alert">
               <p>
                 <strong>{message}</strong>
               </p>
+              {status === 'failed' && fieldErrors.length > 0 && (
+                <ul>
+                  {fieldErrors.map((error) => (
+                    <li key={error.id}>
+                      <a href={`#${error.id}`}>{error.text}</a>
+                    </li>
+                  ))}
+                </ul>
+              )}
               {status === 'declined' && (
                 <p>
                   Your card was not charged. Try again, or <Link href="/support/">call FlyLo-Air Support</Link> and we&apos;ll
@@ -161,15 +188,16 @@ export function CheckoutForm({ flight, fare, passengers }: Props) {
               Fill sample details
             </button>
           </div>
+          <p className="form-note">All fields are required.</p>
           {travelers.map((traveler, index) => {
             const invalid = errors.travelers[index];
+            const errorId = invalid ? `t${index}-error` : undefined;
             return (
               <fieldset key={index} className="traveler">
-                <legend className="visually-hidden">Traveler {index + 1}</legend>
-                <h3 aria-hidden="true">
+                <legend className="traveler-title">
                   Traveler {index + 1}
                   {index === 0 ? ' · Primary contact' : ''}
-                </h3>
+                </legend>
                 <div className="form-grid">
                   <div className={`field${invalid && !traveler.firstName.trim() ? ' is-invalid' : ''}`}>
                     <label htmlFor={`t${index}-first`}>First name</label>
@@ -179,6 +207,7 @@ export function CheckoutForm({ flight, fare, passengers }: Props) {
                       value={traveler.firstName}
                       onChange={(event) => updateTraveler(index, 'firstName', event.target.value)}
                       aria-invalid={invalid && !traveler.firstName.trim() ? true : undefined}
+                      aria-describedby={errorId}
                       required
                     />
                   </div>
@@ -190,11 +219,16 @@ export function CheckoutForm({ flight, fare, passengers }: Props) {
                       value={traveler.lastName}
                       onChange={(event) => updateTraveler(index, 'lastName', event.target.value)}
                       aria-invalid={invalid && !traveler.lastName.trim() ? true : undefined}
+                      aria-describedby={errorId}
                       required
                     />
                   </div>
                 </div>
-                {invalid && <p className="field-error">Enter a first and last name as shown on the ID.</p>}
+                {invalid && (
+                  <p className="field-error" id={errorId}>
+                    Enter a first and last name as shown on the ID.
+                  </p>
+                )}
               </fieldset>
             );
           })}
@@ -223,7 +257,7 @@ export function CheckoutForm({ flight, fare, passengers }: Props) {
         <section className="card" aria-labelledby="payment-title">
           <div className="card-head">
             <h2 id="payment-title">Payment</h2>
-            <span className="muted" style={{ fontSize: '0.88rem' }}>
+            <span id="card-demo-note" className="muted" style={{ fontSize: '0.88rem' }}>
               Demo only. Use card 4242 4242 4242 4242.
             </span>
           </div>
@@ -234,9 +268,10 @@ export function CheckoutForm({ flight, fare, passengers }: Props) {
                 autoComplete="cc-name"
                 value={card.name}
                 onChange={(event) => setCard({ ...card, name: event.target.value })}
+                required
               />
             </CardField>
-            <CardField id="card-number" label="Card number" error={errors.card.number} className="full">
+            <CardField id="card-number" label="Card number" error={errors.card.number} hintId="card-demo-note" className="full">
               <input
                 id="card-number"
                 inputMode="numeric"
@@ -244,6 +279,7 @@ export function CheckoutForm({ flight, fare, passengers }: Props) {
                 placeholder="1234 1234 1234 1234"
                 value={card.number}
                 onChange={(event) => setCard({ ...card, number: formatCardNumber(event.target.value) })}
+                required
               />
             </CardField>
             <CardField id="card-expiry" label="Expiry (MM/YY)" error={errors.card.expiry}>
@@ -254,6 +290,7 @@ export function CheckoutForm({ flight, fare, passengers }: Props) {
                 placeholder="MM/YY"
                 value={card.expiry}
                 onChange={(event) => setCard({ ...card, expiry: formatExpiry(event.target.value) })}
+                required
               />
             </CardField>
             <CardField id="card-cvc" label="Security code" error={errors.card.cvc}>
@@ -264,13 +301,22 @@ export function CheckoutForm({ flight, fare, passengers }: Props) {
                 maxLength={4}
                 value={card.cvc}
                 onChange={(event) => setCard({ ...card, cvc: event.target.value.replace(/\D/g, '') })}
+                required
               />
             </CardField>
           </div>
-          <button type="submit" className="btn btn-lg pay-btn" disabled={status === 'paying'} style={{ marginTop: '1.25rem' }}>
+          <button
+            type="submit"
+            className="btn btn-lg pay-btn"
+            aria-disabled={status === 'paying' ? true : undefined}
+            style={{ marginTop: '1.25rem' }}
+          >
             <LockIcon className="btn-icon" />
             {status === 'paying' ? 'Processing…' : `Pay ${formatCents(totalCents)}`}
           </button>
+          <p className="visually-hidden" role="status">
+            {status === 'paying' ? 'Processing your payment…' : ''}
+          </p>
           <p className="secure-note">
             <LockIcon className="btn-icon" /> No real payment is taken. This is a sample checkout.
           </p>
@@ -280,7 +326,8 @@ export function CheckoutForm({ flight, fare, passengers }: Props) {
       <aside className="card summary-card" aria-labelledby="summary-title">
         <p className="eyebrow">Trip summary</p>
         <h2 id="summary-title" className="summary-route">
-          {origin?.city} → {destination?.city}
+          {origin?.city} <span aria-hidden="true">→</span>
+          <span className="visually-hidden">to</span> {destination?.city}
         </h2>
         <p className="muted" style={{ margin: 0 }}>
           {formatTripDate(flight.date)} · {flight.departs}–{flight.arrives}
@@ -319,21 +366,24 @@ function CardField({
   id,
   label,
   error,
+  hintId,
   className,
   children,
 }: {
   id: string;
   label: string;
   error?: string;
+  hintId?: string;
   className?: string;
   children: React.ReactElement<React.InputHTMLAttributes<HTMLInputElement>>;
 }) {
+  const describedBy = [error ? `${id}-error` : '', hintId ?? ''].filter(Boolean).join(' ');
   return (
     <div className={['field', className, error ? 'is-invalid' : ''].filter(Boolean).join(' ')}>
       <label htmlFor={id}>{label}</label>
       {cloneElement(children, {
         'aria-invalid': error ? true : undefined,
-        'aria-describedby': error ? `${id}-error` : undefined,
+        'aria-describedby': describedBy || undefined,
       })}
       {error && (
         <p className="field-error" id={`${id}-error`}>

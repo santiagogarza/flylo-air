@@ -1,0 +1,591 @@
+{
+  "generatedAt": "2026-10-29T04:13:24.903Z",
+  "baseUrl": "http://127.0.0.1:3100",
+  "travelDate": "2026-11-12",
+  "tags": [
+    "wcag2a",
+    "wcag2aa",
+    "wcag21a",
+    "wcag21aa",
+    "wcag22aa",
+    "best-practice"
+  ],
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "totals": {
+    "inScopeRules": 1,
+    "inScopeNodes": 30,
+    "outOfScopeRules": 0
+  },
+  "pages": [
+    {
+      "key": "home",
+      "title": "Home (/)",
+      "inScope": true,
+      "runs": 2,
+      "ruleCount": 0,
+      "nodeCount": 0,
+      "rulesByImpact": {
+        "critical": 0,
+        "serious": 0,
+        "moderate": 0,
+        "minor": 0
+      },
+      "rules": []
+    },
+    {
+      "key": "results",
+      "title": "Results (/results)",
+      "inScope": true,
+      "runs": 2,
+      "ruleCount": 1,
+      "nodeCount": 30,
+      "rulesByImpact": {
+        "critical": 0,
+        "serious": 1,
+        "moderate": 0,
+        "minor": 0
+      },
+      "rules": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "help": "Elements must have their visible text as part of their accessible name",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/label-content-name-mismatch?application=playwright",
+          "tags": [
+            "wcag21a",
+            "wcag253"
+          ],
+          "nodes": 30,
+          "seenIn": [
+            "SFO to JFK, 2 travelers · desktop",
+            "SFO to JFK, 2 travelers · mobile"
+          ],
+          "targets": [
+            "div[aria-label=\"Fares for FL 119\"] > .fare-option:nth-child(1)",
+            "div[aria-label=\"Fares for FL 119\"] > .fare-option:nth-child(2)",
+            "div[aria-label=\"Fares for FL 119\"] > .fare-option:nth-child(3)",
+            "div[aria-label=\"Fares for FL 626\"] > .fare-option:nth-child(1)",
+            "div[aria-label=\"Fares for FL 626\"] > .fare-option:nth-child(2)",
+            "div[aria-label=\"Fares for FL 626\"] > .fare-option:nth-child(3)",
+            "div[aria-label=\"Fares for FL 853\"] > .fare-option:nth-child(1)",
+            "div[aria-label=\"Fares for FL 853\"] > .fare-option:nth-child(2)"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "checkout",
+      "title": "Checkout (/checkout)",
+      "inScope": true,
+      "runs": 12,
+      "ruleCount": 0,
+      "nodeCount": 0,
+      "rulesByImpact": {
+        "critical": 0,
+        "serious": 0,
+        "moderate": 0,
+        "minor": 0
+      },
+      "rules": []
+    },
+    {
+      "key": "checkout-invalid",
+      "title": "Checkout, invalid flight",
+      "inScope": true,
+      "runs": 2,
+      "ruleCount": 0,
+      "nodeCount": 0,
+      "rulesByImpact": {
+        "critical": 0,
+        "serious": 0,
+        "moderate": 0,
+        "minor": 0
+      },
+      "rules": []
+    },
+    {
+      "key": "support",
+      "title": "Support (/support/)",
+      "inScope": false,
+      "runs": 2,
+      "ruleCount": 0,
+      "nodeCount": 0,
+      "rulesByImpact": {
+        "critical": 0,
+        "serious": 0,
+        "moderate": 0,
+        "minor": 0
+      },
+      "rules": []
+    }
+  ],
+  "runs": [
+    {
+      "page": "home",
+      "title": "Home (/)",
+      "inScope": true,
+      "state": "default",
+      "url": "/",
+      "viewport": "desktop",
+      "width": 1280,
+      "violations": [],
+      "passes": 43,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "home",
+      "title": "Home (/)",
+      "inScope": true,
+      "state": "default",
+      "url": "/",
+      "viewport": "mobile",
+      "width": 390,
+      "violations": [],
+      "passes": 43,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "results",
+      "title": "Results (/results)",
+      "inScope": true,
+      "state": "SFO to JFK, 2 travelers",
+      "url": "/results?from=SFO&to=JFK&date=2026-11-12&passengers=2",
+      "viewport": "desktop",
+      "width": 1280,
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "help": "Elements must have their visible text as part of their accessible name",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/label-content-name-mismatch?application=playwright",
+          "tags": [
+            "wcag21a",
+            "wcag253"
+          ],
+          "nodes": [
+            {
+              "target": "div[aria-label=\"Fares for FL 119\"] > .fare-option:nth-child(1)",
+              "html": "<a class=\"fare-option\" aria-label=\"Select Basic on FL 119 for $242.09 per traveler\" href=\"/checkout?flight=SFO-JFK-2026-11-12-0&amp;fare=basic&amp;passengers=2\"><span class=\"fare-name\">Basic</span><sp",
+              "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            },
+            {
+              "target": "div[aria-label=\"Fares for FL 119\"] > .fare-option:nth-child(2)",
+              "html": "<a class=\"fare-option\" aria-label=\"Select Main on FL 119 for $334.54 per traveler\" href=\"/checkout?flight=SFO-JFK-2026-11-12-0&amp;fare=main&amp;passengers=2\"><span class=\"fare-name\">Main</span><span ",
+              "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            },
+            {
+              "target": "div[aria-label=\"Fares for FL 119\"] > .fare-option:nth-child(3)",
+              "html": "<a class=\"fare-option\" aria-label=\"Select Flex on FL 119 for $451.71 per traveler\" href=\"/checkout?flight=SFO-JFK-2026-11-12-0&amp;fare=flex&amp;passengers=2\"><span class=\"fare-name\">Flex</span><span ",
+              "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            },
+            {
+              "target": "div[aria-label=\"Fares for FL 626\"] > .fare-option:nth-child(1)",
+              "html": "<a class=\"fare-option\" aria-label=\"Select Basic on FL 626 for $261.44 per traveler\" href=\"/checkout?flight=SFO-JFK-2026-11-12-1&amp;fare=basic&amp;passengers=2\"><span class=\"fare-name\">Basic</span><sp",
+              "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            },
+            {
+              "target": "div[aria-label=\"Fares for FL 626\"] > .fare-option:nth-child(2)",
+              "html": "<a class=\"fare-option\" aria-label=\"Select Main on FL 626 for $359.26 per traveler\" href=\"/checkout?flight=SFO-JFK-2026-11-12-1&amp;fare=main&amp;passengers=2\"><span class=\"fare-name\">Main</span><span ",
+              "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            },
+            {
+              "target": "div[aria-label=\"Fares for FL 626\"] > .fare-option:nth-child(3)",
+              "html": "<a class=\"fare-option\" aria-label=\"Select Flex on FL 626 for $483.96 per traveler\" href=\"/checkout?flight=SFO-JFK-2026-11-12-1&amp;fare=flex&amp;passengers=2\"><span class=\"fare-name\">Flex</span><span ",
+              "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            },
+            {
+              "target": "div[aria-label=\"Fares for FL 853\"] > .fare-option:nth-child(1)",
+              "html": "<a class=\"fare-option\" aria-label=\"Select Basic on FL 853 for $274.34 per traveler\" href=\"/checkout?flight=SFO-JFK-2026-11-12-2&amp;fare=basic&amp;passengers=2\"><span class=\"fare-name\">Basic</span><sp",
+              "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            },
+            {
+              "target": "div[aria-label=\"Fares for FL 853\"] > .fare-option:nth-child(2)",
+              "html": "<a class=\"fare-option\" aria-label=\"Select Main on FL 853 for $375.39 per traveler\" href=\"/checkout?flight=SFO-JFK-2026-11-12-2&amp;fare=main&amp;passengers=2\"><span class=\"fare-name\">Main</span><span ",
+              "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            },
+            {
+              "target": "div[aria-label=\"Fares for FL 853\"] > .fare-option:nth-child(3)",
+              "html": "<a class=\"fare-option\" aria-label=\"Select Flex on FL 853 for $504.39 per traveler\" href=\"/checkout?flight=SFO-JFK-2026-11-12-2&amp;fare=flex&amp;passengers=2\"><span class=\"fare-name\">Flex</span><span ",
+              "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            },
+            {
+              "target": "div[aria-label=\"Fares for FL 747\"] > .fare-option:nth-child(1)",
+              "html": "<a class=\"fare-option\" aria-label=\"Select Basic on FL 747 for $279.71 per traveler\" href=\"/checkout?flight=SFO-JFK-2026-11-12-3&amp;fare=basic&amp;passengers=2\"><span class=\"fare-name\">Basic</span><sp",
+              "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            },
+            {
+              "target": "div[aria-label=\"Fares for FL 747\"] > .fare-option:nth-child(2)",
+              "html": "<a class=\"fare-option\" aria-label=\"Select Main on FL 747 for $381.84 per traveler\" href=\"/checkout?flight=SFO-JFK-2026-11-12-3&amp;fare=main&amp;passengers=2\"><span class=\"fare-name\">Main</span><span ",
+              "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            },
+            {
+              "target": "div[aria-label=\"Fares for FL 747\"] > .fare-option:nth-child(3)",
+              "html": "<a class=\"fare-option\" aria-label=\"Select Flex on FL 747 for $514.06 per traveler\" href=\"/checkout?flight=SFO-JFK-2026-11-12-3&amp;fare=flex&amp;passengers=2\"><span class=\"fare-name\">Flex</span><span ",
+              "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            },
+            {
+              "target": "div[aria-label=\"Fares for FL 560\"] > .fare-option:nth-child(1)",
+              "html": "<a class=\"fare-option\" aria-label=\"Select Basic on FL 560 for $230.26 per traveler\" href=\"/checkout?flight=SFO-JFK-2026-11-12-4&amp;fare=basic&amp;passengers=2\"><span class=\"fare-name\">Basic</span><sp",
+              "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            },
+            {
+              "target": "div[aria-label=\"Fares for FL 560\"] > .fare-option:nth-child(2)",
+              "html": "<a class=\"fare-option\" aria-label=\"Select Main on FL 560 for $319.49 per traveler\" href=\"/checkout?flight=SFO-JFK-2026-11-12-4&amp;fare=main&amp;passengers=2\"><span class=\"fare-name\">Main</span><span ",
+              "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            },
+            {
+              "target": "div[aria-label=\"Fares for FL 560\"] > .fare-option:nth-child(3)",
+              "html": "<a class=\"fare-option\" aria-label=\"Select Flex on FL 560 for $432.36 per traveler\" href=\"/checkout?flight=SFO-JFK-2026-11-12-4&amp;fare=flex&amp;passengers=2\"><span class=\"fare-name\">Flex</span><span ",
+              "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            }
+          ]
+        }
+      ],
+      "passes": 41,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "results",
+      "title": "Results (/results)",
+      "inScope": true,
+      "state": "SFO to JFK, 2 travelers",
+      "url": "/results?from=SFO&to=JFK&date=2026-11-12&passengers=2",
+      "viewport": "mobile",
+      "width": 390,
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "help": "Elements must have their visible text as part of their accessible name",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/label-content-name-mismatch?application=playwright",
+          "tags": [
+            "wcag21a",
+            "wcag253"
+          ],
+          "nodes": [
+            {
+              "target": "div[aria-label=\"Fares for FL 119\"] > .fare-option:nth-child(1)",
+              "html": "<a class=\"fare-option\" aria-label=\"Select Basic on FL 119 for $242.09 per traveler\" href=\"/checkout?flight=SFO-JFK-2026-11-12-0&amp;fare=basic&amp;passengers=2\"><span class=\"fare-name\">Basic</span><sp",
+              "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            },
+            {
+              "target": "div[aria-label=\"Fares for FL 119\"] > .fare-option:nth-child(2)",
+              "html": "<a class=\"fare-option\" aria-label=\"Select Main on FL 119 for $334.54 per traveler\" href=\"/checkout?flight=SFO-JFK-2026-11-12-0&amp;fare=main&amp;passengers=2\"><span class=\"fare-name\">Main</span><span ",
+              "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            },
+            {
+              "target": "div[aria-label=\"Fares for FL 119\"] > .fare-option:nth-child(3)",
+              "html": "<a class=\"fare-option\" aria-label=\"Select Flex on FL 119 for $451.71 per traveler\" href=\"/checkout?flight=SFO-JFK-2026-11-12-0&amp;fare=flex&amp;passengers=2\"><span class=\"fare-name\">Flex</span><span ",
+              "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            },
+            {
+              "target": "div[aria-label=\"Fares for FL 626\"] > .fare-option:nth-child(1)",
+              "html": "<a class=\"fare-option\" aria-label=\"Select Basic on FL 626 for $261.44 per traveler\" href=\"/checkout?flight=SFO-JFK-2026-11-12-1&amp;fare=basic&amp;passengers=2\"><span class=\"fare-name\">Basic</span><sp",
+              "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            },
+            {
+              "target": "div[aria-label=\"Fares for FL 626\"] > .fare-option:nth-child(2)",
+              "html": "<a class=\"fare-option\" aria-label=\"Select Main on FL 626 for $359.26 per traveler\" href=\"/checkout?flight=SFO-JFK-2026-11-12-1&amp;fare=main&amp;passengers=2\"><span class=\"fare-name\">Main</span><span ",
+              "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            },
+            {
+              "target": "div[aria-label=\"Fares for FL 626\"] > .fare-option:nth-child(3)",
+              "html": "<a class=\"fare-option\" aria-label=\"Select Flex on FL 626 for $483.96 per traveler\" href=\"/checkout?flight=SFO-JFK-2026-11-12-1&amp;fare=flex&amp;passengers=2\"><span class=\"fare-name\">Flex</span><span ",
+              "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            },
+            {
+              "target": "div[aria-label=\"Fares for FL 853\"] > .fare-option:nth-child(1)",
+              "html": "<a class=\"fare-option\" aria-label=\"Select Basic on FL 853 for $274.34 per traveler\" href=\"/checkout?flight=SFO-JFK-2026-11-12-2&amp;fare=basic&amp;passengers=2\"><span class=\"fare-name\">Basic</span><sp",
+              "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            },
+            {
+              "target": "div[aria-label=\"Fares for FL 853\"] > .fare-option:nth-child(2)",
+              "html": "<a class=\"fare-option\" aria-label=\"Select Main on FL 853 for $375.39 per traveler\" href=\"/checkout?flight=SFO-JFK-2026-11-12-2&amp;fare=main&amp;passengers=2\"><span class=\"fare-name\">Main</span><span ",
+              "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            },
+            {
+              "target": "div[aria-label=\"Fares for FL 853\"] > .fare-option:nth-child(3)",
+              "html": "<a class=\"fare-option\" aria-label=\"Select Flex on FL 853 for $504.39 per traveler\" href=\"/checkout?flight=SFO-JFK-2026-11-12-2&amp;fare=flex&amp;passengers=2\"><span class=\"fare-name\">Flex</span><span ",
+              "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            },
+            {
+              "target": "div[aria-label=\"Fares for FL 747\"] > .fare-option:nth-child(1)",
+              "html": "<a class=\"fare-option\" aria-label=\"Select Basic on FL 747 for $279.71 per traveler\" href=\"/checkout?flight=SFO-JFK-2026-11-12-3&amp;fare=basic&amp;passengers=2\"><span class=\"fare-name\">Basic</span><sp",
+              "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            },
+            {
+              "target": "div[aria-label=\"Fares for FL 747\"] > .fare-option:nth-child(2)",
+              "html": "<a class=\"fare-option\" aria-label=\"Select Main on FL 747 for $381.84 per traveler\" href=\"/checkout?flight=SFO-JFK-2026-11-12-3&amp;fare=main&amp;passengers=2\"><span class=\"fare-name\">Main</span><span ",
+              "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            },
+            {
+              "target": "div[aria-label=\"Fares for FL 747\"] > .fare-option:nth-child(3)",
+              "html": "<a class=\"fare-option\" aria-label=\"Select Flex on FL 747 for $514.06 per traveler\" href=\"/checkout?flight=SFO-JFK-2026-11-12-3&amp;fare=flex&amp;passengers=2\"><span class=\"fare-name\">Flex</span><span ",
+              "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            },
+            {
+              "target": "div[aria-label=\"Fares for FL 560\"] > .fare-option:nth-child(1)",
+              "html": "<a class=\"fare-option\" aria-label=\"Select Basic on FL 560 for $230.26 per traveler\" href=\"/checkout?flight=SFO-JFK-2026-11-12-4&amp;fare=basic&amp;passengers=2\"><span class=\"fare-name\">Basic</span><sp",
+              "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            },
+            {
+              "target": "div[aria-label=\"Fares for FL 560\"] > .fare-option:nth-child(2)",
+              "html": "<a class=\"fare-option\" aria-label=\"Select Main on FL 560 for $319.49 per traveler\" href=\"/checkout?flight=SFO-JFK-2026-11-12-4&amp;fare=main&amp;passengers=2\"><span class=\"fare-name\">Main</span><span ",
+              "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            },
+            {
+              "target": "div[aria-label=\"Fares for FL 560\"] > .fare-option:nth-child(3)",
+              "html": "<a class=\"fare-option\" aria-label=\"Select Flex on FL 560 for $432.36 per traveler\" href=\"/checkout?flight=SFO-JFK-2026-11-12-4&amp;fare=flex&amp;passengers=2\"><span class=\"fare-name\">Flex</span><span ",
+              "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+            }
+          ]
+        }
+      ],
+      "passes": 41,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "checkout",
+      "title": "Checkout (/checkout)",
+      "inScope": true,
+      "state": "1 traveler · empty",
+      "url": "/checkout?flight=SFO-JFK-2026-11-12-0&fare=main&passengers=1",
+      "viewport": "desktop",
+      "width": 1280,
+      "violations": [],
+      "passes": 45,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "checkout",
+      "title": "Checkout (/checkout)",
+      "inScope": true,
+      "state": "1 traveler · empty",
+      "url": "/checkout?flight=SFO-JFK-2026-11-12-0&fare=main&passengers=1",
+      "viewport": "mobile",
+      "width": 390,
+      "violations": [],
+      "passes": 45,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "checkout",
+      "title": "Checkout (/checkout)",
+      "inScope": true,
+      "state": "1 traveler · sample details filled",
+      "url": "/checkout?flight=SFO-JFK-2026-11-12-0&fare=main&passengers=1",
+      "viewport": "desktop",
+      "width": 1280,
+      "violations": [],
+      "passes": 45,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "checkout",
+      "title": "Checkout (/checkout)",
+      "inScope": true,
+      "state": "1 traveler · sample details filled",
+      "url": "/checkout?flight=SFO-JFK-2026-11-12-0&fare=main&passengers=1",
+      "viewport": "mobile",
+      "width": 390,
+      "violations": [],
+      "passes": 45,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "checkout",
+      "title": "Checkout (/checkout)",
+      "inScope": true,
+      "state": "1 traveler · validation error",
+      "url": "/checkout?flight=SFO-JFK-2026-11-12-0&fare=main&passengers=1",
+      "viewport": "desktop",
+      "width": 1280,
+      "violations": [],
+      "passes": 45,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "checkout",
+      "title": "Checkout (/checkout)",
+      "inScope": true,
+      "state": "1 traveler · validation error",
+      "url": "/checkout?flight=SFO-JFK-2026-11-12-0&fare=main&passengers=1",
+      "viewport": "mobile",
+      "width": 390,
+      "violations": [],
+      "passes": 45,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "checkout",
+      "title": "Checkout (/checkout)",
+      "inScope": true,
+      "state": "2 travelers · empty",
+      "url": "/checkout?flight=SFO-JFK-2026-11-12-0&fare=main&passengers=2",
+      "viewport": "desktop",
+      "width": 1280,
+      "violations": [],
+      "passes": 45,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "checkout",
+      "title": "Checkout (/checkout)",
+      "inScope": true,
+      "state": "2 travelers · empty",
+      "url": "/checkout?flight=SFO-JFK-2026-11-12-0&fare=main&passengers=2",
+      "viewport": "mobile",
+      "width": 390,
+      "violations": [],
+      "passes": 45,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "checkout",
+      "title": "Checkout (/checkout)",
+      "inScope": true,
+      "state": "2 travelers · sample details filled",
+      "url": "/checkout?flight=SFO-JFK-2026-11-12-0&fare=main&passengers=2",
+      "viewport": "desktop",
+      "width": 1280,
+      "violations": [],
+      "passes": 45,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "checkout",
+      "title": "Checkout (/checkout)",
+      "inScope": true,
+      "state": "2 travelers · sample details filled",
+      "url": "/checkout?flight=SFO-JFK-2026-11-12-0&fare=main&passengers=2",
+      "viewport": "mobile",
+      "width": 390,
+      "violations": [],
+      "passes": 45,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "checkout",
+      "title": "Checkout (/checkout)",
+      "inScope": true,
+      "state": "2 travelers · validation error",
+      "url": "/checkout?flight=SFO-JFK-2026-11-12-0&fare=main&passengers=2",
+      "viewport": "desktop",
+      "width": 1280,
+      "violations": [],
+      "passes": 45,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "checkout",
+      "title": "Checkout (/checkout)",
+      "inScope": true,
+      "state": "2 travelers · validation error",
+      "url": "/checkout?flight=SFO-JFK-2026-11-12-0&fare=main&passengers=2",
+      "viewport": "mobile",
+      "width": 390,
+      "violations": [],
+      "passes": 45,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "checkout-invalid",
+      "title": "Checkout, invalid flight",
+      "inScope": true,
+      "state": "unknown flight",
+      "url": "/checkout?flight=XXX-YYY-2000-01-01-9&fare=main&passengers=1",
+      "viewport": "desktop",
+      "width": 1280,
+      "violations": [],
+      "passes": 35,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "checkout-invalid",
+      "title": "Checkout, invalid flight",
+      "inScope": true,
+      "state": "unknown flight",
+      "url": "/checkout?flight=XXX-YYY-2000-01-01-9&fare=main&passengers=1",
+      "viewport": "mobile",
+      "width": 390,
+      "violations": [],
+      "passes": 35,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "support",
+      "title": "Support (/support/)",
+      "inScope": false,
+      "state": "default",
+      "url": "/support/",
+      "viewport": "desktop",
+      "width": 1280,
+      "violations": [],
+      "passes": 45,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "support",
+      "title": "Support (/support/)",
+      "inScope": false,
+      "state": "default",
+      "url": "/support/",
+      "viewport": "mobile",
+      "width": 390,
+      "violations": [],
+      "passes": 45,
+      "incomplete": [
+        "color-contrast"
+      ]
+    }
+  ]
+}

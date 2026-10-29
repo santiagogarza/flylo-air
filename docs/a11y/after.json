@@ -1,0 +1,389 @@
+{
+  "generatedAt": "2026-10-29T04:32:36.570Z",
+  "baseUrl": "http://127.0.0.1:3100",
+  "travelDate": "2026-11-12",
+  "tags": [
+    "wcag2a",
+    "wcag2aa",
+    "wcag21a",
+    "wcag21aa",
+    "wcag22aa",
+    "best-practice"
+  ],
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "totals": {
+    "inScopeRules": 0,
+    "inScopeNodes": 0,
+    "outOfScopeRules": 0
+  },
+  "pages": [
+    {
+      "key": "home",
+      "title": "Home (/)",
+      "inScope": true,
+      "runs": 2,
+      "ruleCount": 0,
+      "nodeCount": 0,
+      "rulesByImpact": {
+        "critical": 0,
+        "serious": 0,
+        "moderate": 0,
+        "minor": 0
+      },
+      "rules": []
+    },
+    {
+      "key": "results",
+      "title": "Results (/results)",
+      "inScope": true,
+      "runs": 2,
+      "ruleCount": 0,
+      "nodeCount": 0,
+      "rulesByImpact": {
+        "critical": 0,
+        "serious": 0,
+        "moderate": 0,
+        "minor": 0
+      },
+      "rules": []
+    },
+    {
+      "key": "checkout",
+      "title": "Checkout (/checkout)",
+      "inScope": true,
+      "runs": 12,
+      "ruleCount": 0,
+      "nodeCount": 0,
+      "rulesByImpact": {
+        "critical": 0,
+        "serious": 0,
+        "moderate": 0,
+        "minor": 0
+      },
+      "rules": []
+    },
+    {
+      "key": "checkout-invalid",
+      "title": "Checkout, invalid flight",
+      "inScope": true,
+      "runs": 2,
+      "ruleCount": 0,
+      "nodeCount": 0,
+      "rulesByImpact": {
+        "critical": 0,
+        "serious": 0,
+        "moderate": 0,
+        "minor": 0
+      },
+      "rules": []
+    },
+    {
+      "key": "support",
+      "title": "Support (/support/)",
+      "inScope": false,
+      "runs": 2,
+      "ruleCount": 0,
+      "nodeCount": 0,
+      "rulesByImpact": {
+        "critical": 0,
+        "serious": 0,
+        "moderate": 0,
+        "minor": 0
+      },
+      "rules": []
+    }
+  ],
+  "runs": [
+    {
+      "page": "home",
+      "title": "Home (/)",
+      "inScope": true,
+      "state": "default",
+      "url": "/",
+      "viewport": "desktop",
+      "width": 1280,
+      "violations": [],
+      "passes": 43,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "home",
+      "title": "Home (/)",
+      "inScope": true,
+      "state": "default",
+      "url": "/",
+      "viewport": "mobile",
+      "width": 390,
+      "violations": [],
+      "passes": 43,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "results",
+      "title": "Results (/results)",
+      "inScope": true,
+      "state": "SFO to JFK, 2 travelers",
+      "url": "/results?from=SFO&to=JFK&date=2026-11-12&passengers=2",
+      "viewport": "desktop",
+      "width": 1280,
+      "violations": [],
+      "passes": 41,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "results",
+      "title": "Results (/results)",
+      "inScope": true,
+      "state": "SFO to JFK, 2 travelers",
+      "url": "/results?from=SFO&to=JFK&date=2026-11-12&passengers=2",
+      "viewport": "mobile",
+      "width": 390,
+      "violations": [],
+      "passes": 41,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "checkout",
+      "title": "Checkout (/checkout)",
+      "inScope": true,
+      "state": "1 traveler · empty",
+      "url": "/checkout?flight=SFO-JFK-2026-11-12-0&fare=main&passengers=1",
+      "viewport": "desktop",
+      "width": 1280,
+      "violations": [],
+      "passes": 45,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "checkout",
+      "title": "Checkout (/checkout)",
+      "inScope": true,
+      "state": "1 traveler · empty",
+      "url": "/checkout?flight=SFO-JFK-2026-11-12-0&fare=main&passengers=1",
+      "viewport": "mobile",
+      "width": 390,
+      "violations": [],
+      "passes": 45,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "checkout",
+      "title": "Checkout (/checkout)",
+      "inScope": true,
+      "state": "1 traveler · sample details filled",
+      "url": "/checkout?flight=SFO-JFK-2026-11-12-0&fare=main&passengers=1",
+      "viewport": "desktop",
+      "width": 1280,
+      "violations": [],
+      "passes": 45,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "checkout",
+      "title": "Checkout (/checkout)",
+      "inScope": true,
+      "state": "1 traveler · sample details filled",
+      "url": "/checkout?flight=SFO-JFK-2026-11-12-0&fare=main&passengers=1",
+      "viewport": "mobile",
+      "width": 390,
+      "violations": [],
+      "passes": 45,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "checkout",
+      "title": "Checkout (/checkout)",
+      "inScope": true,
+      "state": "1 traveler · validation error",
+      "url": "/checkout?flight=SFO-JFK-2026-11-12-0&fare=main&passengers=1",
+      "viewport": "desktop",
+      "width": 1280,
+      "violations": [],
+      "passes": 45,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "checkout",
+      "title": "Checkout (/checkout)",
+      "inScope": true,
+      "state": "1 traveler · validation error",
+      "url": "/checkout?flight=SFO-JFK-2026-11-12-0&fare=main&passengers=1",
+      "viewport": "mobile",
+      "width": 390,
+      "violations": [],
+      "passes": 45,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "checkout",
+      "title": "Checkout (/checkout)",
+      "inScope": true,
+      "state": "2 travelers · empty",
+      "url": "/checkout?flight=SFO-JFK-2026-11-12-0&fare=main&passengers=2",
+      "viewport": "desktop",
+      "width": 1280,
+      "violations": [],
+      "passes": 45,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "checkout",
+      "title": "Checkout (/checkout)",
+      "inScope": true,
+      "state": "2 travelers · empty",
+      "url": "/checkout?flight=SFO-JFK-2026-11-12-0&fare=main&passengers=2",
+      "viewport": "mobile",
+      "width": 390,
+      "violations": [],
+      "passes": 45,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "checkout",
+      "title": "Checkout (/checkout)",
+      "inScope": true,
+      "state": "2 travelers · sample details filled",
+      "url": "/checkout?flight=SFO-JFK-2026-11-12-0&fare=main&passengers=2",
+      "viewport": "desktop",
+      "width": 1280,
+      "violations": [],
+      "passes": 45,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "checkout",
+      "title": "Checkout (/checkout)",
+      "inScope": true,
+      "state": "2 travelers · sample details filled",
+      "url": "/checkout?flight=SFO-JFK-2026-11-12-0&fare=main&passengers=2",
+      "viewport": "mobile",
+      "width": 390,
+      "violations": [],
+      "passes": 45,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "checkout",
+      "title": "Checkout (/checkout)",
+      "inScope": true,
+      "state": "2 travelers · validation error",
+      "url": "/checkout?flight=SFO-JFK-2026-11-12-0&fare=main&passengers=2",
+      "viewport": "desktop",
+      "width": 1280,
+      "violations": [],
+      "passes": 45,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "checkout",
+      "title": "Checkout (/checkout)",
+      "inScope": true,
+      "state": "2 travelers · validation error",
+      "url": "/checkout?flight=SFO-JFK-2026-11-12-0&fare=main&passengers=2",
+      "viewport": "mobile",
+      "width": 390,
+      "violations": [],
+      "passes": 45,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "checkout-invalid",
+      "title": "Checkout, invalid flight",
+      "inScope": true,
+      "state": "unknown flight",
+      "url": "/checkout?flight=XXX-YYY-2000-01-01-9&fare=main&passengers=1",
+      "viewport": "desktop",
+      "width": 1280,
+      "violations": [],
+      "passes": 35,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "checkout-invalid",
+      "title": "Checkout, invalid flight",
+      "inScope": true,
+      "state": "unknown flight",
+      "url": "/checkout?flight=XXX-YYY-2000-01-01-9&fare=main&passengers=1",
+      "viewport": "mobile",
+      "width": 390,
+      "violations": [],
+      "passes": 35,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "support",
+      "title": "Support (/support/)",
+      "inScope": false,
+      "state": "default",
+      "url": "/support/",
+      "viewport": "desktop",
+      "width": 1280,
+      "violations": [],
+      "passes": 45,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "page": "support",
+      "title": "Support (/support/)",
+      "inScope": false,
+      "state": "default",
+      "url": "/support/",
+      "viewport": "mobile",
+      "width": 390,
+      "violations": [],
+      "passes": 45,
+      "incomplete": [
+        "color-contrast"
+      ]
+    }
+  ]
+}

@@ -52,7 +52,8 @@ export default function HomePage() {
                       {findAirport(from)?.city} to {findAirport(to)?.city}
                     </p>
                     <p className="deal-route">
-                      {from} → {to}
+                      {from} <span aria-hidden="true">→</span>
+                      <span className="visually-hidden">to</span> {to}
                     </p>
                   </div>
                   <p className="deal-price">From {formatCents(cheapest)}</p>
