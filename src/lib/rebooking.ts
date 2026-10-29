@@ -1,6 +1,7 @@
 import { distanceKm, findAirport } from './airports';
 import { addDays, defaultTravelDate, isoDate } from './dates';
 import { searchFlights, type FareKey, type Flight } from './flights';
+import { normalizeBookingReference } from './support';
 
 export const HUBS = ['ORD', 'DEN', 'ATL'] as const;
 export const MIN_LAYOVER_MINUTES = 50;
@@ -251,7 +252,7 @@ export function sampleBookingHref(now = new Date()): string | undefined {
 
 export function matchesSampleBooking(reference: string, lastName: string): boolean {
   return (
-    reference.trim().toUpperCase().replace(/\s+/g, '') === SAMPLE_BOOKING.reference &&
+    normalizeBookingReference(reference) === SAMPLE_BOOKING.reference &&
     lastName.trim().toLowerCase() === SAMPLE_BOOKING.lastName.toLowerCase()
   );
 }
