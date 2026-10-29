@@ -1025,13 +1025,19 @@ textarea:focus {
 }
 
 .action-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem;
-  margin-top: 1.25rem;
-  padding-top: 1.25rem;
+  margin: 1.25rem -1.5rem -1.5rem;
+  padding: 1rem 1.5rem;
+  background: var(--surface);
   border-top: 1px solid var(--line);
+  border-radius: 0 0 var(--radius) var(--radius);
+  box-shadow: 0 -10px 24px -18px rgba(11, 37, 69, 0.45);
 }
 
 .action-bar .btn-primary-action {
@@ -1080,15 +1086,8 @@ textarea:focus {
   }
 
   .action-bar {
-    position: sticky;
-    bottom: 0;
-    z-index: 20;
-    background: var(--surface);
-    margin-inline: -1.1rem;
-    margin-bottom: -1.1rem;
+    margin: 1.25rem -1.1rem -1.1rem;
     padding: 0.85rem 1.1rem;
-    border-radius: 0 0 var(--radius) var(--radius);
-    box-shadow: 0 -8px 20px -12px rgba(11, 37, 69, 0.35);
   }
 
   .action-bar .btn-primary-action {
