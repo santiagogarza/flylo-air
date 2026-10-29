@@ -43,6 +43,16 @@ describe('line items', () => {
     expect(sumLineItems(items)).toBe(quoteCents(fare, 1));
   });
 
+  it('charges the quoted total for several travelers', () => {
+    const travelers = [
+      { firstName: 'Maya', lastName: 'Chen' },
+      { firstName: 'Leo', lastName: 'Chen' },
+      { firstName: 'Ava', lastName: 'Chen' },
+    ];
+    expect(sumLineItems(buildLineItems(fare, travelers.slice(0, 2)))).toBe(quoteCents(fare, 2));
+    expect(sumLineItems(buildLineItems(fare, travelers))).toBe(quoteCents(fare, 3));
+  });
+
   it('matches the quote for every generated fare', () => {
     for (const flight of searchFlights('SFO', 'JFK', '2026-11-12')) {
       for (const item of flight.fares) {
