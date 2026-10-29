@@ -5,6 +5,7 @@ import { findAirport } from '@/lib/airports';
 import { defaultTravelDate, isoDate } from '@/lib/dates';
 import { formatDuration, formatTripDate, isIsoDate, searchFlights } from '@/lib/flights';
 import { param, passengerCount, type SearchParams } from '@/lib/params';
+import { FARE_MULTIPLIERS, earnedMiles, formatMiles } from '@/lib/miles';
 import { formatCents, perTravelerCents } from '@/lib/pricing';
 
 export const metadata: Metadata = { title: 'Choose a flight' };
@@ -63,7 +64,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
                 {flights.length} flights · prices per traveler
               </h2>
               <p className="muted" style={{ margin: 0 }}>
-                Taxes and fees included
+                Taxes and fees included · <Link href="/miles">FlyLo Miles</Link> you would earn on each fare
               </p>
             </div>
             <ol className="flight-list">
@@ -100,11 +101,14 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
                         key={fare.key}
                         className="fare-option"
                         href={`/checkout?flight=${encodeURIComponent(flight.id)}&fare=${fare.key}&passengers=${passengers}`}
-                        aria-label={`Select ${fare.name} on ${flight.flightNumber} for ${formatCents(perTravelerCents(fare))} per traveler`}
+                        aria-label={`Select ${fare.name} on ${flight.flightNumber} for ${formatCents(perTravelerCents(fare))} per traveler, earns ${formatMiles(earnedMiles(flight.from, flight.to, fare.key))} FlyLo Miles`}
                       >
                         <span className="fare-name">{fare.name}</span>
                         <span className="fare-price">{formatCents(perTravelerCents(fare))}</span>
                         <span className="fare-note">{fare.perks[0]}</span>
+                        <span className="fare-miles" title={`${FARE_MULTIPLIERS[fare.key]}x miles on ${fare.name}`}>
+                          +{formatMiles(earnedMiles(flight.from, flight.to, fare.key))} mi
+                        </span>
                       </Link>
                     ))}
                   </div>
