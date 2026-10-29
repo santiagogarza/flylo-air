@@ -1294,12 +1294,12 @@ textarea:focus {
 
 .map-arc {
   fill: none;
-  stroke: rgba(147, 197, 253, 0.45);
-  stroke-width: calc(1.4px / var(--k));
+  stroke: rgba(147, 197, 253, 0.6);
+  stroke-width: calc(1.6px / var(--k));
   stroke-linecap: round;
   stroke-dasharray: 1;
   stroke-dashoffset: 0;
-  animation: arc-draw 1.8s cubic-bezier(0.65, 0, 0.35, 1) both;
+  animation: arc-draw 2.4s cubic-bezier(0.65, 0, 0.35, 1) both;
   transition: opacity 0.3s ease, stroke 0.3s ease;
 }
 
