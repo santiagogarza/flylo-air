@@ -174,18 +174,19 @@ const SAMPLE_TRIPS: SampleTrip[] = [
   { daysAgo: 41, from: 'SFO', to: 'SEA', fare: 'flex' },
   { daysAgo: 77, from: 'LAX', to: 'SFO', fare: 'basic' },
   { daysAgo: 79, from: 'SFO', to: 'LAX', fare: 'flex' },
-  { daysAgo: 132, from: 'MIA', to: 'BOS', fare: 'main' },
-  { daysAgo: 137, from: 'BOS', to: 'MIA', fare: 'basic' },
-  { daysAgo: 214, from: 'DEN', to: 'SFO', fare: 'main' },
-  { daysAgo: 218, from: 'SFO', to: 'DEN', fare: 'basic' },
+  { daysAgo: 162, from: 'MIA', to: 'BOS', fare: 'main' },
+  { daysAgo: 167, from: 'BOS', to: 'MIA', fare: 'basic' },
+  { daysAgo: 281, from: 'DEN', to: 'SFO', fare: 'main' },
+  { daysAgo: 285, from: 'SFO', to: 'DEN', fare: 'basic' },
 ];
 
+// Every date stays within 300 days so the whole sample fits the 12-month window whatever today is.
 const SAMPLE_EXTRAS: SampleExtra[] = [
   { daysAgo: 23, kind: 'partner', title: 'FlyLo Rewards Card', detail: 'Sample card purchases · 1 mile per $1', miles: 1_497 },
   { daysAgo: 40, kind: 'promo', title: 'Double-miles weekend', detail: 'Bonus on your San Francisco to Seattle trip', miles: 679 },
-  { daysAgo: 64, kind: 'partner', title: 'Harbor & Pine Hotels', detail: 'Partner stay · 3 nights × 500 miles', miles: 1_500 },
-  { daysAgo: 104, kind: 'redemption', title: 'Free checked bag', detail: 'Used on Boston to Miami', miles: -2_500 },
-  { daysAgo: 150, kind: 'promo', title: 'Welcome to Cruise', detail: 'Tier bonus for reaching Cruise', miles: 2_500 },
+  { daysAgo: 104, kind: 'redemption', title: 'Free checked bag', detail: 'Used on Seattle to San Francisco', miles: -2_500 },
+  { daysAgo: 37, kind: 'promo', title: 'Welcome to Cruise', detail: 'Tier bonus for reaching Cruise', miles: 2_500 },
+  { daysAgo: 226, kind: 'partner', title: 'Harbor & Pine Hotels', detail: 'Partner stay · 3 nights × 500 miles', miles: 1_500 },
 ];
 
 /** Maya Chen's sample history, dated relative to `now`, newest first. Same `now` day, same history. */

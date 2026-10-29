@@ -81,15 +81,16 @@ export function ProgressRing({ qualifying, progress }: { qualifying: number; pro
       <figcaption className="miles-ring-center" aria-hidden="true">
         <span className="miles-ring-value">{formatMiles(shown)}</span>
         <span className="miles-ring-unit">qualifying miles</span>
+        {progress.next && <span className="miles-ring-target">of {formatMiles(progress.next.threshold)}</span>}
       </figcaption>
     </figure>
   );
 }
 
 export function Sparkline({ months }: { months: MonthTotal[] }) {
-  const width = 320;
-  const height = 72;
-  const pad = 6;
+  const width = 600;
+  const height = 110;
+  const pad = 10;
   const max = Math.max(1, ...months.map((month) => month.miles));
   const step = (width - pad * 2) / (months.length - 1);
   const points = months.map((month, index) => [pad + index * step, height - pad - (month.miles / max) * (height - pad * 2)] as const);
@@ -102,17 +103,17 @@ export function Sparkline({ months }: { months: MonthTotal[] }) {
 
   return (
     <div className="sparkline">
-      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={label} preserveAspectRatio="none">
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={label}>
         <defs>
           <linearGradient id="sparkline-fill" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="#1d4ed8" stopOpacity="0.28" />
+            <stop offset="0%" stopColor="#1d4ed8" stopOpacity="0.32" />
             <stop offset="100%" stopColor="#1d4ed8" stopOpacity="0" />
           </linearGradient>
         </defs>
         <path d={area} fill="url(#sparkline-fill)" />
         <path className="sparkline-line" d={line} pathLength={1} />
         {points.map(([x, y], index) =>
-          months[index].miles > 0 ? <circle key={months[index].month} cx={x} cy={y} r="2.6" className="sparkline-dot" /> : null,
+          months[index].miles > 0 ? <circle key={months[index].month} cx={x} cy={y} r="4.5" className="sparkline-dot" /> : null,
         )}
       </svg>
       <div className="sparkline-labels" aria-hidden="true">
@@ -164,8 +165,8 @@ export function Confetti() {
     const spread = (index * 37) % 100;
     return {
       left: `${spread}%`,
-      delay: `${((index * 53) % 40) / 100}s`,
-      duration: `${2.2 + ((index * 29) % 14) / 10}s`,
+      delay: `${((index * 53) % 120) / 100}s`,
+      duration: `${3.2 + ((index * 29) % 18) / 10}s`,
       drift: `${((index * 71) % 160) - 80}px`,
       spin: `${360 + ((index * 97) % 540)}deg`,
       color: CONFETTI_COLORS[index % CONFETTI_COLORS.length],

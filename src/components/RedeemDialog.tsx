@@ -35,11 +35,14 @@ export function RedeemDialog({ open, initialReward, balance, onClose, onRedeem }
     if (!dialog) return;
     if (open && !dialog.open) {
       const opener = document.activeElement as HTMLElement | null;
+      const scrollbar = window.innerWidth - document.documentElement.clientWidth;
       dialog.showModal();
       document.body.classList.add('has-modal');
+      document.body.style.paddingRight = scrollbar > 0 ? `${scrollbar}px` : '';
       return () => {
         if (dialog.open) dialog.close();
         document.body.classList.remove('has-modal');
+        document.body.style.paddingRight = '';
         opener?.focus();
       };
     }

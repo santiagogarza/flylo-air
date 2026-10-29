@@ -114,6 +114,15 @@ export function MilesDashboard({ nowIso }: { nowIso: string }) {
   const visible = filterEntries(entries, filter);
   const shownBalance = useCountUp(balance, { duration: 1400 });
   const validThru = `12/${String(now.getUTCFullYear() + 1).slice(2)}`;
+  const upcoming = progress.next;
+  const nextPerks = upcoming
+    ? TIER_BENEFITS.filter((benefit) => benefit.values[upcoming.key] !== false && benefit.values[upcoming.key] !== benefit.values[progress.tier.key]).map(
+        (benefit) => {
+          const value = benefit.values[upcoming.key];
+          return value === true ? benefit.label : `${benefit.label}: ${value}`;
+        },
+      )
+    : [];
 
   function openRedeem(reward: RewardKey) {
     setDialog({ open: true, reward });
@@ -216,6 +225,19 @@ export function MilesDashboard({ nowIso }: { nowIso: string }) {
                 );
               })}
             </ol>
+            {progress.next && nextPerks.length > 0 && (
+              <div className="next-perks" data-tier={progress.next.key}>
+                <h3>Unlock at {progress.next.name}</h3>
+                <ul>
+                  {nextPerks.map((perk) => (
+                    <li key={perk}>
+                      <SparkleIcon className="btn-icon" />
+                      {perk}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </section>
 
           <section className="card miles-activity" aria-labelledby="activity-title">
@@ -294,7 +316,13 @@ export function MilesDashboard({ nowIso }: { nowIso: string }) {
                     <th key={tier.key} scope="col" data-tier={tier.key} aria-current={tier.key === progress.tier.key ? 'true' : undefined}>
                       <span className="benefit-tier">{tier.name}</span>
                       <span className="benefit-threshold">{tier.threshold === 0 ? 'Join free' : `${formatMiles(tier.threshold)} mi`}</span>
-                      {tier.key === progress.tier.key && <span className="benefit-you">You</span>}
+                      {tier.key === progress.tier.key ? (
+                        <span className="benefit-you">You</span>
+                      ) : (
+                        <span className="benefit-you" data-placeholder aria-hidden="true">
+                          You
+                        </span>
+                      )}
                     </th>
                   ))}
                 </tr>
