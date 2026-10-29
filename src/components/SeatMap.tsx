@@ -227,9 +227,9 @@ export function SeatMap({ flight, fare, passengers }: Props) {
                       choose(seat.id);
                     }}
                     onKeyDown={(event) => onSeatKeyDown(event, seat.id)}
-                    onFocus={() => {
+                    onFocus={(event) => {
                       setFocusId(seat.id);
-                      setFocusTipId(seat.id);
+                      if (event.currentTarget.matches(':focus-visible')) setFocusTipId(seat.id);
                     }}
                     onBlur={() => setFocusTipId((current) => (current === seat.id ? null : current))}
                     onHover={(hovering) => setHoverId(hovering ? seat.id : null)}
@@ -530,7 +530,7 @@ type SeatShapeProps = {
   register: (node: SVGGElement | null) => void;
   onChoose: () => void;
   onKeyDown: (event: React.KeyboardEvent<SVGGElement>) => void;
-  onFocus: () => void;
+  onFocus: (event: React.FocusEvent<SVGGElement>) => void;
   onBlur: () => void;
   onHover: (hovering: boolean) => void;
 };
