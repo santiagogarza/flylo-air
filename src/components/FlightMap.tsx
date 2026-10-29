@@ -144,7 +144,7 @@ export function FlightMap({ flights, selected, dimmed, getNow, reducedMotion, de
     }
   }
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (reducedMotion) {
       animation.current = null;
       viewRef.current = targetView;
