@@ -1,10 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import { IntentPrefetchLink } from '@/components/IntentPrefetchLink';
 
-// The support page carries the voice call code, so it is prefetched when someone heads for the
-// link (hover, focus, touch) instead of on every page load.
 const LINKS = [
   { href: '/', label: 'Book', match: (path: string) => path === '/' || path.startsWith('/results') || path.startsWith('/checkout'), prefetchOnIntent: false },
   { href: '/support/', label: 'Support', match: (path: string) => path.startsWith('/support'), prefetchOnIntent: true },
@@ -12,23 +11,14 @@ const LINKS = [
 
 export function SiteNav() {
   const pathname = usePathname() ?? '/';
-  const router = useRouter();
   return (
     <nav className="site-nav" aria-label="Main">
       {LINKS.map((link) => {
-        const prefetch = link.prefetchOnIntent ? () => router.prefetch(link.href) : undefined;
+        const NavLink = link.prefetchOnIntent ? IntentPrefetchLink : Link;
         return (
-          <Link
-            key={link.href}
-            href={link.href}
-            aria-current={link.match(pathname) ? 'page' : undefined}
-            prefetch={link.prefetchOnIntent ? false : undefined}
-            onMouseEnter={prefetch}
-            onFocus={prefetch}
-            onTouchStart={prefetch}
-          >
+          <NavLink key={link.href} href={link.href} aria-current={link.match(pathname) ? 'page' : undefined}>
             {link.label}
-          </Link>
+          </NavLink>
         );
       })}
     </nav>

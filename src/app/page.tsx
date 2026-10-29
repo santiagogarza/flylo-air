@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ClockIcon, HeadsetIcon, RouteArt, SeatIcon } from '@/components/icons';
+import { IntentPrefetchLink } from '@/components/IntentPrefetchLink';
 import { SearchForm } from '@/components/SearchForm';
 import { defaultTravelDate, isoDate } from '@/lib/dates';
 import { popularDeals } from '@/lib/deals';
@@ -73,7 +74,7 @@ export default function HomePage() {
               </div>
               <h3>Support that answers</h3>
               <p>
-                Call us right from your browser. <Link href="/support/">Talk to support</Link>.
+                Call us right from your browser. <IntentPrefetchLink href="/support/">Talk to support</IntentPrefetchLink>.
               </p>
             </div>
           </div>
