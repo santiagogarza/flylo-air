@@ -1,6 +1,7 @@
 import { boardingPassHref, normalizeSeat, parsePassengerName } from '@/lib/boarding';
 import { findFare, findFlight } from '@/lib/flights';
 
+// Public: browsers fetch the install manifest without credentials; it only echoes sanitized pass params.
 export function GET(request: Request) {
   const params = new URL(request.url).searchParams;
   const flight = findFlight(params.get('flight'));

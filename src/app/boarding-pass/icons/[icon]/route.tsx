@@ -13,6 +13,7 @@ export function generateStaticParams() {
   return Object.keys(ICONS).map((icon) => ({ icon }));
 }
 
+// Public: static PWA icons fetched by browsers and the OS before any session exists.
 export async function GET(_request: Request, { params }: { params: Promise<{ icon: string }> }) {
   const { icon } = await params;
   const spec = ICONS[icon];
