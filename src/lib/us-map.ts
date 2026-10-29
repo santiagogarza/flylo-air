@@ -138,18 +138,19 @@ export type View = { k: number; x: number; y: number };
 
 export const FULL_VIEW: View = { k: 1, x: 0, y: 0 };
 
-/** A zoom (k) and pan (x, y) that frames the given points, kept inside the map's edges. */
-export function viewFor(points: Point[], maxZoom = 2.6, padding = 70): View {
+/**
+ * A zoom (k) and pan (x, y) that frames the given points, kept inside the map's edges. Routes that
+ * would only zoom in slightly keep the whole map in view.
+ */
+export function viewFor(points: Point[], maxZoom = 2.6, padding = 70, minZoom = 1.2): View {
   const xs = points.map((p) => p.x);
   const ys = points.map((p) => p.y);
   const minX = Math.min(...xs);
   const maxX = Math.max(...xs);
   const minY = Math.min(...ys);
   const maxY = Math.max(...ys);
-  const k = Math.max(
-    1,
-    Math.min(maxZoom, MAP_WIDTH / (maxX - minX + padding * 2), MAP_HEIGHT / (maxY - minY + padding * 2)),
-  );
+  const k = Math.min(maxZoom, MAP_WIDTH / (maxX - minX + padding * 2), MAP_HEIGHT / (maxY - minY + padding * 2));
+  if (k < minZoom) return FULL_VIEW;
   const x = MAP_WIDTH / 2 - k * ((minX + maxX) / 2);
   const y = MAP_HEIGHT / 2 - k * ((minY + maxY) / 2);
   return {

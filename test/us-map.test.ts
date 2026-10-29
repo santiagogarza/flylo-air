@@ -100,9 +100,10 @@ describe('views', () => {
     expect(view.y).toBeGreaterThanOrEqual(MAP_HEIGHT - view.k * MAP_HEIGHT);
   });
 
-  it('barely zooms for a coast-to-coast route', () => {
-    expect(viewFor(projectRoute(findAirport('SEA')!, findAirport('MIA')!)).k).toBeLessThan(1.1);
-    expect(viewFor(projectRoute(findAirport('DEN')!, findAirport('HNL')!)).k).toBeLessThan(2);
+  it('shows the whole map for coast-to-coast routes', () => {
+    expect(viewFor(projectRoute(findAirport('SEA')!, findAirport('MIA')!))).toEqual(FULL_VIEW);
+    expect(viewFor(projectRoute(findAirport('SFO')!, findAirport('JFK')!))).toEqual(FULL_VIEW);
+    expect(viewFor(projectRoute(findAirport('LAX')!, findAirport('LAS')!)).k).toBe(2.6);
     expect(mixView(FULL_VIEW, { k: 3, x: -100, y: -50 }, 0.5)).toEqual({ k: 2, x: -50, y: -25 });
   });
 });
