@@ -145,6 +145,8 @@ function markdown(summary) {
 }
 
 async function main() {
+  const busy = await fetch(base, { signal: AbortSignal.timeout(2_000) }).then(() => true, () => false);
+  if (busy) throw new Error(`Something is already listening on ${base}; stop it or pass --port so the benchmark measures a fresh build.`);
   if (!args['skip-build']) await run('npm', ['run', 'build']);
 
   const server = spawn('npx', ['next', 'start', '-p', String(port)], { stdio: ['ignore', 'inherit', 'inherit'], detached: true });
