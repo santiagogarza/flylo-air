@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { FareCalendar } from '@/components/FareCalendar';
 import { SearchForm } from '@/components/SearchForm';
 import { findAirport } from '@/lib/airports';
 import { defaultTravelDate, isoDate } from '@/lib/dates';
@@ -38,6 +39,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
           <summary style={{ cursor: 'pointer', fontWeight: 700 }}>Edit search</summary>
           <div style={{ marginTop: '1rem' }}>
             <SearchForm
+              key={`${from?.code}-${to?.code}-${date}-${passengers}`}
               compact
               from={from?.code}
               to={to?.code}
@@ -58,6 +60,9 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
           </div>
         ) : (
           <>
+            {from && to && (
+              <FareCalendar from={from.code} to={to.code} date={date} passengers={passengers} today={isoDate(new Date())} keepScroll />
+            )}
             <div className="results-summary">
               <h2 style={{ margin: 0 }}>
                 {flights.length} flights · prices per traveler
