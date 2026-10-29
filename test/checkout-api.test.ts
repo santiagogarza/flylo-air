@@ -30,6 +30,18 @@ describe('POST /api/checkout', () => {
     expect(body.amountCents).toBe(quoteCents(fare, 1));
   });
 
+  it('books two travelers at the quoted price', async () => {
+    const travelers = [
+      { firstName: 'Maya', lastName: 'Chen' },
+      { firstName: 'Leo', lastName: 'Chen' },
+    ];
+    const response = await handleCheckout(post('/api/checkout', order({ travelers, amountCents: quoteCents(fare, 2) })), context());
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.ok).toBe(true);
+    expect(body.amountCents).toBe(quoteCents(fare, 2));
+  });
+
   it('declines when the quoted amount is out of date', async () => {
     const response = await handleCheckout(post('/api/checkout', order({ amountCents: quoteCents(fare, 1) - 100 })), context());
     expect(response.status).toBe(402);
