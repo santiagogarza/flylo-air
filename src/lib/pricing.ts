@@ -34,7 +34,7 @@ export function buildLineItems(fare: Fare, travelers: Traveler[]): LineItem[] {
 }
 
 export function sumLineItems(items: LineItem[]): number {
-  return toCents(items.map((item) => item.amount).reduce((total, amount) => total + amount));
+  return items.reduce((total, item) => total + toCents(item.amount), 0);
 }
 
 function travelerName(traveler: Traveler, index: number): string {
