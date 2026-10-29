@@ -306,7 +306,9 @@ export function FlightTracker({ initialFlight }: { initialFlight?: string }) {
                   <th scope="col">Route · Dep</th>
                   <th scope="col">Status</th>
                   <th scope="col">ETA</th>
-                  <th scope="col">Alt · Speed</th>
+                  <th scope="col">
+                    Alt · Spd<span className="visually-hidden"> (altitude and ground speed)</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>

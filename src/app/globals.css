@@ -1233,10 +1233,29 @@ textarea:focus {
 
 .flight-map {
   --k: 1;
+  position: relative;
+  user-select: none;
+}
+
+.flight-map-base {
   display: block;
   width: 100%;
   height: auto;
-  user-select: none;
+}
+
+.flight-map-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.map-planes {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
 
 .map-graticule {
@@ -1388,15 +1407,45 @@ textarea:focus {
 }
 
 .map-plane {
-  cursor: pointer;
+  --size: clamp(14px, calc(22px * var(--ppu, 1)), 24px);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  will-change: transform;
   transition: opacity 0.3s ease;
+}
+
+.map-plane.is-selected {
+  --size: clamp(20px, calc(30px * var(--ppu, 1)), 32px);
+  z-index: 1;
 }
 
 .map-plane.is-dim {
   opacity: 0.18;
 }
 
+.map-plane-rotor {
+  position: absolute;
+  left: calc(var(--size) / -2);
+  top: calc(var(--size) / -2);
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(253, 230, 138, 0.5) 0%, rgba(253, 230, 138, 0) 70%);
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.map-plane.is-selected .map-plane-rotor {
+  background: radial-gradient(circle, rgba(249, 115, 22, 0.65) 0%, rgba(249, 115, 22, 0) 70%);
+}
+
 .map-plane-icon {
+  display: block;
+  width: 100%;
+  height: 100%;
   overflow: visible;
 }
 
@@ -1412,13 +1461,15 @@ textarea:focus {
 }
 
 .map-plane-label {
-  fill: #fff;
+  position: absolute;
+  left: 10px;
+  bottom: 8px;
+  color: #fff;
   font-family: var(--mono);
   font-size: 11px;
   font-weight: 800;
-  paint-order: stroke;
-  stroke: #071a33;
-  stroke-width: 3px;
+  white-space: nowrap;
+  text-shadow: 0 0 3px #071a33, 0 0 3px #071a33, 0 0 3px #071a33;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease;

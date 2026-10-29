@@ -88,12 +88,15 @@ export function FlightMap({ flights, selected, dimmed, getNow, reducedMotion, de
   const titleId = useId();
   const descId = useId();
   const glowId = useId().replace(/:/g, '');
-  const svgRef = useRef<SVGSVGElement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<SVGGElement>(null);
+  const overlayViewportRef = useRef<SVGGElement>(null);
   const flownRef = useRef<SVGGElement>(null);
   const airportRefs = useRef(new Map<string, SVGGElement>());
-  const planeRefs = useRef(new Map<string, SVGGElement>());
+  const planeRefs = useRef(new Map<string, HTMLDivElement>());
+  const pixelsPerUnit = useRef(1);
   const viewRef = useRef<View>(FULL_VIEW);
+  const drawnView = useRef('');
   const animation = useRef<{ from: View; to: View; start: number } | null>(null);
   const latest = useRef({ flights, selected, getNow });
   latest.current = { flights, selected, getNow };
@@ -111,19 +114,26 @@ export function FlightMap({ flights, selected, dimmed, getNow, reducedMotion, de
     const { k, x, y } = viewRef.current;
     const toScreen = (p: Point) => `translate(${(p.x * k + x).toFixed(2)} ${(p.y * k + y).toFixed(2)})`;
 
-    viewportRef.current?.setAttribute('transform', `translate(${x.toFixed(2)} ${y.toFixed(2)}) scale(${k.toFixed(4)})`);
-    svgRef.current?.style.setProperty('--k', k.toFixed(4));
-    for (const { airport, point } of AIRPORT_POINTS) {
-      airportRefs.current.get(airport.code)?.setAttribute('transform', toScreen(point));
+    const viewKey = `${x.toFixed(2)} ${y.toFixed(2)} ${k.toFixed(4)}`;
+    if (viewKey !== drawnView.current) {
+      drawnView.current = viewKey;
+      const transform = `translate(${x.toFixed(2)} ${y.toFixed(2)}) scale(${k.toFixed(4)})`;
+      viewportRef.current?.setAttribute('transform', transform);
+      overlayViewportRef.current?.setAttribute('transform', transform);
+      frameRef.current?.style.setProperty('--k', k.toFixed(4));
+      for (const { airport, point } of AIRPORT_POINTS) {
+        airportRefs.current.get(airport.code)?.setAttribute('transform', toScreen(point));
+      }
     }
 
     const current = latest.current;
+    const ppu = pixelsPerUnit.current;
     for (const flight of current.flights) {
       const el = planeRefs.current.get(flight.id);
       if (!el) continue;
       const along = pointAlong(routePoints(flight.from, flight.to), flightProgress(flight.departMs, flight.arriveMs, nowMs));
-      el.setAttribute('transform', toScreen(along));
-      el.firstElementChild?.setAttribute('transform', `rotate(${(along.angle + 45).toFixed(1)})`);
+      el.style.transform = `translate(${((along.x * k + x) * ppu).toFixed(2)}px, ${((along.y * k + y) * ppu).toFixed(2)}px)`;
+      (el.firstElementChild as HTMLElement | null)?.style.setProperty('transform', `rotate(${(along.angle + 45).toFixed(1)}deg)`);
     }
 
     const flown = flownRef.current;
@@ -147,6 +157,20 @@ export function FlightMap({ flights, selected, dimmed, getNow, reducedMotion, de
     draw(getNow(), performance.now());
   });
 
+  useLayoutEffect(() => {
+    const frame = frameRef.current;
+    if (!frame) return;
+    const measure = () => {
+      pixelsPerUnit.current = frame.clientWidth / MAP_WIDTH;
+      frame.style.setProperty('--ppu', pixelsPerUnit.current.toFixed(3));
+      draw(latest.current.getNow(), performance.now());
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(frame);
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     if (reducedMotion) return;
     let frame = 0;
@@ -161,106 +185,95 @@ export function FlightMap({ flights, selected, dimmed, getNow, reducedMotion, de
   const selectedKey = selected ? [selected.from, selected.to].sort().join('-') : null;
 
   return (
-    <svg
-      ref={svgRef}
-      className={`flight-map${selected ? ' has-selection' : ''}`}
-      viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
-      role="img"
-      aria-labelledby={`${titleId} ${descId}`}
-    >
-      <title id={titleId}>FlyLo-Air live flight map</title>
-      <desc id={descId}>{description}</desc>
-      <defs>
-        <radialGradient id={`${glowId}-sea`} cx="50%" cy="38%" r="75%">
-          <stop offset="0%" stopColor="#163a6b" />
-          <stop offset="100%" stopColor="#071a33" />
-        </radialGradient>
-        <radialGradient id={`${glowId}-halo`}>
-          <stop offset="0%" stopColor="#fde68a" stopOpacity="0.55" />
-          <stop offset="100%" stopColor="#fde68a" stopOpacity="0" />
-        </radialGradient>
-        <radialGradient id={`${glowId}-halo-selected`}>
-          <stop offset="0%" stopColor="#f97316" stopOpacity="0.7" />
-          <stop offset="100%" stopColor="#f97316" stopOpacity="0" />
-        </radialGradient>
-        <filter id={`${glowId}-glow`} x="-100%" y="-100%" width="300%" height="300%">
-          <feGaussianBlur stdDeviation="3" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-      </defs>
+    <div ref={frameRef} className={`flight-map${selected ? ' has-selection' : ''}`}>
+      <svg className="flight-map-base" viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`} role="img" aria-labelledby={`${titleId} ${descId}`}>
+        <title id={titleId}>FlyLo-Air live flight map</title>
+        <desc id={descId}>{description}</desc>
+        <defs>
+          <radialGradient id={`${glowId}-sea`} cx="50%" cy="38%" r="75%">
+            <stop offset="0%" stopColor="#163a6b" />
+            <stop offset="100%" stopColor="#071a33" />
+          </radialGradient>
+          <radialGradient id={`${glowId}-airport`}>
+            <stop offset="0%" stopColor="#93c5fd" stopOpacity="0.7" />
+            <stop offset="100%" stopColor="#93c5fd" stopOpacity="0" />
+          </radialGradient>
+        </defs>
 
-      <rect width={MAP_WIDTH} height={MAP_HEIGHT} fill={`url(#${glowId}-sea)`} />
+        <rect width={MAP_WIDTH} height={MAP_HEIGHT} fill={`url(#${glowId}-sea)`} />
 
-      <g ref={viewportRef}>
-        <path className="map-graticule" d={GRATICULE_PATH} />
-        <path className="map-land" d={LAND_PATH} />
-        <path className="map-borders" d={BORDERS_PATH} />
-        <rect
-          className="map-inset"
-          x={HAWAII_INSET.x}
-          y={HAWAII_INSET.y}
-          width={HAWAII_INSET.width}
-          height={HAWAII_INSET.height}
-          rx="12"
-        />
-        <text
-          className="map-inset-label"
-          x={HAWAII_INSET.x + HAWAII_INSET.width - 12}
-          y={HAWAII_INSET.y + HAWAII_INSET.height - 12}
-          textAnchor="end"
-        >
-          HAWAII
-        </text>
-        <path className="map-land" d={HAWAII_PATH} />
+        <g ref={viewportRef}>
+          <path className="map-graticule" d={GRATICULE_PATH} />
+          <path className="map-land" d={LAND_PATH} />
+          <path className="map-borders" d={BORDERS_PATH} />
+          <rect
+            className="map-inset"
+            x={HAWAII_INSET.x}
+            y={HAWAII_INSET.y}
+            width={HAWAII_INSET.width}
+            height={HAWAII_INSET.height}
+            rx="12"
+          />
+          <text
+            className="map-inset-label"
+            x={HAWAII_INSET.x + HAWAII_INSET.width - 12}
+            y={HAWAII_INSET.y + HAWAII_INSET.height - 12}
+            textAnchor="end"
+          >
+            HAWAII
+          </text>
+          <path className="map-land" d={HAWAII_PATH} />
 
-        <g className="map-arcs">
-          {ARCS.map((arc, index) => (
-            <path
-              key={arc.key}
-              className={`map-arc${arc.key === selectedKey ? ' is-selected' : ''}`}
-              d={arc.d}
-              pathLength={1}
-              style={{ animationDelay: `${0.15 + index * 0.09}s` }}
+          <g className="map-arcs">
+            {ARCS.map((arc, index) => (
+              <path
+                key={arc.key}
+                className={`map-arc${arc.key === selectedKey ? ' is-selected' : ''}`}
+                d={arc.d}
+                pathLength={1}
+                style={{ animationDelay: `${0.15 + index * 0.09}s` }}
+              />
+            ))}
+          </g>
+        </g>
+
+        <g className="map-airports">
+          {AIRPORT_POINTS.map(({ airport }) => (
+            <AirportMarker
+              key={airport.code}
+              airport={airport}
+              label={LABELS[airport.code]}
+              glow={`url(#${glowId}-airport)`}
+              highlighted={Boolean(selected && (selected.from === airport.code || selected.to === airport.code))}
+              register={(el) => {
+                if (el) airportRefs.current.set(airport.code, el);
+                else airportRefs.current.delete(airport.code);
+              }}
             />
           ))}
         </g>
+      </svg>
 
-        {selectedRoute && (
-          <g className="map-focus">
-            <path className="map-focus-remaining" d={pathFromPoints(selectedRoute)} pathLength={1} />
-            <g ref={flownRef}>
-              <path className="map-focus-flown-glow" />
-              <path className="map-focus-flown" />
+      <svg className="flight-map-overlay" viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`} aria-hidden="true" focusable="false">
+        <g ref={overlayViewportRef}>
+          {selectedRoute && (
+            <g className="map-focus">
+              <path className="map-focus-remaining" d={pathFromPoints(selectedRoute)} pathLength={1} />
+              <g ref={flownRef}>
+                <path className="map-focus-flown-glow" />
+                <path className="map-focus-flown" />
+              </g>
             </g>
-          </g>
-        )}
-      </g>
+          )}
+        </g>
 
-      <g className="map-airports">
-        {AIRPORT_POINTS.map(({ airport }) => (
-          <AirportMarker
-            key={airport.code}
-            airport={airport}
-            label={LABELS[airport.code]}
-            glow={`url(#${glowId}-glow)`}
-            highlighted={Boolean(selected && (selected.from === airport.code || selected.to === airport.code))}
-            register={(el) => {
-              if (el) airportRefs.current.set(airport.code, el);
-              else airportRefs.current.delete(airport.code);
-            }}
-          />
-        ))}
-      </g>
+      </svg>
 
-      <g className="map-planes">
+      <div className="map-planes" aria-hidden="true">
         {flights.map((flight) => {
           const isSelected = selected?.id === flight.id;
-          const size = isSelected ? 30 : 22;
           return (
-            <g
+            <div
               key={flight.id}
               ref={(el) => {
                 if (el) planeRefs.current.set(flight.id, el);
@@ -269,20 +282,15 @@ export function FlightMap({ flights, selected, dimmed, getNow, reducedMotion, de
               className={`map-plane${isSelected ? ' is-selected' : ''}${dimmed?.has(flight.id) ? ' is-dim' : ''}`}
               onClick={() => onSelect(flight.id)}
             >
-              <g>
-                <circle r={size * 0.8} fill={`url(#${glowId}-${isSelected ? 'halo-selected' : 'halo'})`} />
-                <svg x={-size / 2} y={-size / 2} width={size} height={size} overflow="visible">
-                  <PlaneIcon className="map-plane-icon" />
-                </svg>
-              </g>
-              <text className="map-plane-label" x="14" y="-12">
-                {flight.flightNumber}
-              </text>
-            </g>
+              <span className="map-plane-rotor">
+                <PlaneIcon className="map-plane-icon" />
+              </span>
+              <span className="map-plane-label">{flight.flightNumber}</span>
+            </div>
           );
         })}
-      </g>
-    </svg>
+      </div>
+    </div>
   );
 }
 
@@ -302,8 +310,9 @@ function AirportMarker({
   const point = projectPoint(airport);
   return (
     <g ref={register} className={`map-airport${highlighted ? ' is-highlighted' : ''}`} transform={`translate(${point.x.toFixed(2)} ${point.y.toFixed(2)})`}>
+      <circle r="13" fill={glow} />
       <circle className="map-airport-pulse" r="4" />
-      <circle className="map-airport-dot" r="4" filter={glow} />
+      <circle className="map-airport-dot" r="4" />
       <text className="map-airport-label" x={label.dx} y={label.dy} textAnchor={label.anchor}>
         {airport.city}
         <tspan className="map-airport-code" dx="4">
