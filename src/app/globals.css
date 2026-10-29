@@ -1139,6 +1139,11 @@ textarea:focus {
   align-items: center;
 }
 
+.input-reference {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .trip-lookup-sample {
   margin: 0;
   min-height: 1.5rem;

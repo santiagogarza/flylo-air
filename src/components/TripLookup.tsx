@@ -55,12 +55,13 @@ export function TripLookup({ href, sampleReference, sampleLastName }: Props) {
           <label htmlFor="lookup-reference">Booking reference</label>
           <input
             id="lookup-reference"
+            className="input-reference"
             name="reference"
             autoComplete="off"
             autoCapitalize="characters"
             placeholder="FLY-48213"
             value={reference}
-            onChange={(event) => setReference(event.target.value.toUpperCase())}
+            onChange={(event) => setReference(event.target.value)}
             aria-invalid={Boolean(errors.reference)}
             aria-describedby={errors.reference ? 'lookup-reference-error' : undefined}
           />
