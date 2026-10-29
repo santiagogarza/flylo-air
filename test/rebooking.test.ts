@@ -206,6 +206,8 @@ describe('sample booking', () => {
 
   it('finds FLY-48213 for Chen, ignoring case and spaces', () => {
     expect(matchesSampleBooking(' fly-48213 ', 'chen')).toBe(true);
+    expect(matchesSampleBooking('FLY48213', 'Chen')).toBe(true);
+    expect(matchesSampleBooking('fly 48213', 'Chen')).toBe(true);
     expect(matchesSampleBooking('FLY-48214', 'Chen')).toBe(false);
     expect(matchesSampleBooking('FLY-48213', 'Smith')).toBe(false);
   });

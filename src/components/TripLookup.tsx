@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
 import { SearchIcon } from '@/components/icons';
 import { matchesSampleBooking } from '@/lib/rebooking';
+import { normalizeBookingReference } from '@/lib/support';
 
 type Props = {
   href: string;
@@ -31,7 +32,7 @@ export function TripLookup({ href, sampleReference, sampleLastName }: Props) {
   const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const next = {
-      reference: /^FLY-?\d{5}$/i.test(reference.trim()) ? undefined : 'Enter a booking reference like FLY-48213.',
+      reference: /^FLY-\d{5}$/.test(normalizeBookingReference(reference)) ? undefined : 'Enter a booking reference like FLY-48213.',
       lastName: lastName.trim() ? undefined : 'Enter the last name on the booking.',
     };
     setErrors(next);
