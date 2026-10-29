@@ -868,6 +868,493 @@ textarea:focus {
   justify-content: center;
 }
 
+/* Seat map */
+
+.choose-seats-link {
+  width: 100%;
+  margin-top: 1.25rem;
+}
+
+.seatmap-card .card-head {
+  margin-bottom: 0.85rem;
+}
+
+.seatmap-card .btn-link:disabled {
+  color: var(--ink-soft);
+  opacity: 0.6;
+  cursor: default;
+  text-decoration: none;
+}
+
+.traveler-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.traveler-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.75rem;
+  padding: 0.3rem 0.45rem 0.3rem 0.8rem;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.traveler-chip:hover {
+  border-color: var(--blue);
+}
+
+.traveler-chip.is-active {
+  border-color: var(--blue);
+  background: var(--sky);
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.18);
+}
+
+.chip-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  color: var(--blue);
+}
+
+.chip-seat {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: var(--page);
+  color: var(--ink-soft);
+}
+
+.traveler-chip.has-seat .chip-seat {
+  background: var(--blue);
+  color: #fff;
+  animation: chip-pop 0.45s ease;
+}
+
+@keyframes chip-pop {
+  0% {
+    transform: scale(0.6);
+  }
+  60% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.seat-hint {
+  margin: 0.85rem 0 0.75rem;
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+}
+
+.fare-note {
+  margin: 0 0 1rem;
+  font-size: 0.92rem;
+}
+
+.fare-note-basic {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: var(--sun-ink);
+}
+
+.fare-note-flex {
+  background: var(--ok-bg);
+  border-color: #a7f3d0;
+  color: #065f46;
+}
+
+.seat-legend {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.1rem;
+  font-size: 0.86rem;
+  color: var(--ink-soft);
+}
+
+.seat-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.legend-swatch {
+  width: 1.35rem;
+  height: 1.35rem;
+  overflow: visible;
+}
+
+.legend-exit-tag {
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #fff;
+  background: #dc2626;
+  border-radius: 4px;
+  padding: 0.1rem 0.3rem;
+}
+
+.seat-legend .legend-note {
+  font-style: italic;
+}
+
+.seatmap-frame {
+  position: relative;
+  border-radius: var(--radius);
+  padding: 1rem 0;
+  background:
+    radial-gradient(circle at 15% 8%, rgba(255, 255, 255, 0.9), transparent 28%),
+    radial-gradient(circle at 85% 55%, rgba(255, 255, 255, 0.8), transparent 30%),
+    linear-gradient(180deg, #dbeafe 0%, var(--sky) 45%, #f1f6ff 100%);
+  border: 1px solid var(--sky-2);
+}
+
+.seatmap {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+.seatmap-fuselage {
+  fill: url(#seatmap-body);
+  stroke: #b6c2d3;
+  stroke-width: 1.5;
+}
+
+.seatmap-wing {
+  fill: url(#seatmap-wing);
+  stroke: #9fb3d1;
+  stroke-width: 1.2;
+}
+
+.seatmap-engine {
+  fill: #e2e8f0;
+  stroke: #94a3b8;
+  stroke-width: 1.2;
+}
+
+.seatmap-floor {
+  fill: #f8fafc;
+  stroke: #e2e8f0;
+}
+
+.seatmap-brand {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  fill: var(--navy);
+  text-anchor: middle;
+}
+
+.seatmap-window {
+  fill: #bfdbfe;
+}
+
+.seatmap-exit-row {
+  fill: #fff7ed;
+  stroke: #fb923c;
+  stroke-width: 1.2;
+  stroke-dasharray: 4 3;
+}
+
+.seatmap-door,
+.seatmap-exit-tag {
+  fill: #dc2626;
+}
+
+.seatmap-exit-text {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  fill: #fff;
+  text-anchor: middle;
+}
+
+.seatmap-row-number {
+  font-size: 10px;
+  font-weight: 700;
+  fill: #94a3b8;
+  text-anchor: middle;
+}
+
+.seatmap-zone-line {
+  stroke: #cbd5e1;
+  stroke-dasharray: 2 4;
+}
+
+.seatmap-zone-label {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-anchor: middle;
+  fill: var(--blue);
+}
+
+.seatmap-zone-label.zone-extra {
+  fill: var(--sun-ink);
+}
+
+.seatmap-zone-label.zone-basic {
+  fill: var(--ink-soft);
+}
+
+.seatmap-letter {
+  font-size: 10px;
+  font-weight: 700;
+  fill: #64748b;
+  text-anchor: middle;
+}
+
+.seatmap-facility rect {
+  fill: #eef2f7;
+  stroke: #cbd5e1;
+}
+
+.seatmap-facility.is-lavatory rect {
+  fill: #e0f2fe;
+  stroke: #bae6fd;
+}
+
+.seatmap-facility-icon {
+  fill: none;
+  stroke: #475569;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.seatmap-facility.is-lavatory .seatmap-facility-icon {
+  fill: #0369a1;
+  stroke: none;
+}
+
+.seatmap-facility-text {
+  font-size: 8.5px;
+  font-weight: 700;
+  fill: #475569;
+  text-anchor: middle;
+}
+
+.seat {
+  outline: none;
+}
+
+.seat .seat-ring {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 3;
+}
+
+.seat:focus-visible .seat-ring {
+  stroke: #f59e0b;
+}
+
+.seat .seat-shape {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.seat .seat-body {
+  stroke-width: 1.5;
+  transition: fill 0.15s ease, stroke 0.15s ease;
+}
+
+.seat .seat-mark {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.seat .seat-label {
+  font-size: 12px;
+  font-weight: 800;
+  fill: #fff;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.seat.is-available .seat-body {
+  fill: #fff;
+  stroke: var(--blue);
+}
+
+.seat.is-available .seat-back {
+  fill: #bfdbfe;
+}
+
+.seat.is-available.zone-extra .seat-body {
+  fill: #fff7ed;
+  stroke: var(--sun);
+}
+
+.seat.is-available.zone-extra .seat-back {
+  fill: #fdba74;
+}
+
+.seat.is-included .seat-body {
+  fill: var(--ok-bg);
+  stroke: var(--ok);
+}
+
+.seat.is-included .seat-back {
+  fill: #a7f3d0;
+}
+
+.seat.is-included .seat-mark {
+  stroke: var(--ok);
+}
+
+.seat.is-occupied .seat-body {
+  fill: #e2e8f0;
+  stroke: #cbd5e1;
+}
+
+.seat.is-occupied .seat-back {
+  fill: #cbd5e1;
+}
+
+.seat.is-occupied .seat-mark {
+  stroke: #94a3b8;
+}
+
+.seat.is-selected .seat-body {
+  fill: var(--blue);
+  stroke: var(--blue-dark);
+}
+
+.seat.is-selected .seat-back {
+  fill: var(--blue-dark);
+}
+
+g.seat {
+  cursor: pointer;
+}
+
+g.seat.is-occupied {
+  cursor: not-allowed;
+}
+
+g.seat.is-available:hover .seat-body,
+g.seat.is-included:hover .seat-body {
+  fill: var(--sky-2);
+}
+
+g.seat.is-selected .seat-shape {
+  animation: seat-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes seat-pop {
+  0% {
+    transform: scale(0.55);
+  }
+  55% {
+    transform: scale(1.22);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.seat-tip {
+  position: absolute;
+  z-index: 5;
+  transform: translate(-50%, calc(-100% - 10px));
+  display: grid;
+  gap: 0.1rem;
+  min-width: 9.5rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--navy);
+  color: #dbeafe;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  box-shadow: var(--shadow);
+  pointer-events: none;
+  text-align: left;
+}
+
+.seat-tip::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  width: 10px;
+  height: 10px;
+  background: var(--navy);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.seat-tip strong {
+  color: #fff;
+  font-size: 0.95rem;
+}
+
+.seat-tip-price {
+  font-weight: 800;
+  color: #fdba74;
+}
+
+.seat-tip.is-occupied .seat-tip-price {
+  color: #cbd5e1;
+}
+
+.seat-lines li {
+  align-items: center;
+}
+
+.seat-lines li > span:first-child {
+  display: grid;
+}
+
+.seat-lines small {
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+}
+
+.seat-lines li > span:last-child {
+  font-weight: 700;
+}
+
+.extras-total {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 0.75rem;
+  font-weight: 700;
+}
+
+.extras-amount {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--sun-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.extras-note {
+  font-size: 0.86rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.continue-btn {
+  width: 100%;
+}
+
 /* Support call */
 
 .support-card {
