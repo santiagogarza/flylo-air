@@ -1,5 +1,5 @@
 // Reproducible Lighthouse benchmark for the production build.
-// Usage: npm run perf -- --label before   (options: --runs 3, --port 3100, --skip-build)
+// Usage: npm run perf -- --label before   (options: --runs 3, --port 3100, --pages home,results, --skip-build)
 // Builds (npm run build), starts `next start`, runs Lighthouse with the mobile and desktop
 // presets N times per page and keeps the median run (Lighthouse's own computeMedianRun).
 // Writes perf/<label>/<page>.<preset>.json (median report), summary.{json,md}, plus HTML reports
@@ -19,6 +19,7 @@ const { values: args } = parseArgs({
     label: { type: 'string', default: 'latest' },
     runs: { type: 'string', default: '3' },
     port: { type: 'string', default: '3100' },
+    pages: { type: 'string' },
     'skip-build': { type: 'boolean', default: false },
   },
 });
@@ -34,12 +35,13 @@ const travel = new Date();
 travel.setUTCDate(travel.getUTCDate() + 14);
 const date = travel.toISOString().slice(0, 10);
 
-const PAGES = [
+const ALL_PAGES = [
   { id: 'home', name: 'Home', path: '/' },
   { id: 'results', name: 'Results', path: `/results?from=SFO&to=JFK&date=${date}&passengers=1` },
   { id: 'checkout', name: 'Checkout', path: `/checkout?flight=SFO-JFK-${date}-0&fare=basic&passengers=1` },
   { id: 'support', name: 'Support (measure only)', path: '/support/' },
 ];
+const PAGES = args.pages ? ALL_PAGES.filter((page) => args.pages.split(',').includes(page.id)) : ALL_PAGES;
 
 const PRESETS = {
   mobile: undefined,
