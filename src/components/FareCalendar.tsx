@@ -93,7 +93,7 @@ export function FareCalendar({ from, to, date, passengers, today, headingLevel =
 
   const bookable = [...monthFares.values()].filter((fare) => fare.date >= today);
   const monthStats = fareStats(bookable);
-  const ranks = new Map(cheapestDays(bookable, 3).map((fare, index) => [fare.date, index + 1]));
+  const ranks = new Map(bookable.length > 3 ? cheapestDays(bookable, 3).map((fare, index) => [fare.date, index + 1]) : []);
   const deals = cheapestDays(upcoming, 5);
   const upcomingStats = fareStats(upcoming);
 
