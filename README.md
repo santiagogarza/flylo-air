@@ -32,6 +32,15 @@ npm run typecheck
 npm run build
 ```
 
+## Performance benchmark
+
+```bash
+npm run perf -- --label after                        # build, next start, Lighthouse mobile + desktop, 3 runs, median
+npm run perf:compare -- --before before --after after
+```
+
+`npm run perf` measures `/`, `/results` (SFO → JFK, 14 days out), `/checkout` for one flight and `/support/`, and saves the median JSON reports plus `summary.md` in `perf/<label>/`. `perf:compare` writes `perf/compare/comparison.md` and renders side-by-side gauges and a page-load filmstrip (`gauges.png`, `filmstrip.png`). Options: `--runs`, `--port`, `--pages home,results`, `--skip-build`.
+
 ## Environment variables
 
 All of these are **server-only**. Never prefix them with `NEXT_PUBLIC_`, and never commit them.

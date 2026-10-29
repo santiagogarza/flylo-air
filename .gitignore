@@ -2,6 +2,9 @@ node_modules/
 .next/
 out/
 coverage/
+perf/*/runs/
+perf/*/*.html
+perf/compare/*.png
 *.tsbuildinfo
 next-env.d.ts
 

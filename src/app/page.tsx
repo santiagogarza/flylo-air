@@ -1,19 +1,12 @@
 import Link from 'next/link';
 import { ClockIcon, HeadsetIcon, RouteArt, SeatIcon } from '@/components/icons';
+import { IntentPrefetchLink } from '@/components/IntentPrefetchLink';
 import { SearchForm } from '@/components/SearchForm';
-import { findAirport } from '@/lib/airports';
 import { defaultTravelDate, isoDate } from '@/lib/dates';
-import { searchFlights } from '@/lib/flights';
-import { formatCents, perTravelerCents } from '@/lib/pricing';
+import { popularDeals } from '@/lib/deals';
+import { formatCents } from '@/lib/pricing';
 
 export const dynamic = 'force-dynamic';
-
-const POPULAR = [
-  ['SFO', 'JFK'],
-  ['SEA', 'LAX'],
-  ['BOS', 'MIA'],
-  ['DEN', 'HNL'],
-] as const;
 
 export default function HomePage() {
   const date = defaultTravelDate();
@@ -42,23 +35,19 @@ export default function HomePage() {
           <h2 id="popular-title">Popular routes</h2>
           <p className="muted">One-way fares per traveler, taxes and fees included.</p>
           <div className="grid-3">
-            {POPULAR.map(([from, to]) => {
-              const flights = searchFlights(from, to, date);
-              const cheapest = Math.min(...flights.map((flight) => perTravelerCents(flight.fares[0])));
-              return (
-                <Link key={`${from}-${to}`} className="card deal" href={`/results?from=${from}&to=${to}&date=${date}&passengers=1`}>
-                  <div>
-                    <p className="eyebrow">
-                      {findAirport(from)?.city} to {findAirport(to)?.city}
-                    </p>
-                    <p className="deal-route">
-                      {from} → {to}
-                    </p>
-                  </div>
-                  <p className="deal-price">From {formatCents(cheapest)}</p>
-                </Link>
-              );
-            })}
+            {popularDeals(date).map(({ from, to, fromCity, toCity, cheapestCents }) => (
+              <Link key={`${from}-${to}`} className="card deal" href={`/results?from=${from}&to=${to}&date=${date}&passengers=1`}>
+                <div>
+                  <p className="eyebrow">
+                    {fromCity} to {toCity}
+                  </p>
+                  <p className="deal-route">
+                    {from} → {to}
+                  </p>
+                </div>
+                <p className="deal-price">From {formatCents(cheapestCents)}</p>
+              </Link>
+            ))}
           </div>
         </section>
 
@@ -85,7 +74,7 @@ export default function HomePage() {
               </div>
               <h3>Support that answers</h3>
               <p>
-                Call us right from your browser. <Link href="/support/">Talk to support</Link>.
+                Call us right from your browser. <IntentPrefetchLink href="/support/">Talk to support</IntentPrefetchLink>.
               </p>
             </div>
           </div>
