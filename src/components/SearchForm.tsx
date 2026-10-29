@@ -19,11 +19,11 @@ export function SearchForm({ from = 'SFO', to = 'JFK', date, minDate, passengers
   const same = origin === destination;
 
   return (
-    <form action="/results" method="get" className={compact ? 'search-compact' : undefined} aria-label="Search flights">
+    <form action="/results" method="get" className={compact ? 'search-compact' : undefined} role="search" aria-label="Search flights">
       {!compact && (
-        <div className="trip-type" aria-hidden="true">
+        <p className="trip-type">
           <span>One way</span>
-        </div>
+        </p>
       )}
       <div className="search-grid">
         <div className="field">
@@ -71,11 +71,13 @@ export function SearchForm({ from = 'SFO', to = 'JFK', date, minDate, passengers
           Search flights
         </button>
       </div>
-      {same && (
-        <p id="search-same" className="field-error" style={{ marginTop: '0.75rem' }}>
-          Choose a different destination.
-        </p>
-      )}
+      <div aria-live="polite">
+        {same && (
+          <p id="search-same" className="field-error" style={{ marginTop: '0.75rem' }}>
+            Choose a different destination.
+          </p>
+        )}
+      </div>
     </form>
   );
 }
