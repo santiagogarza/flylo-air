@@ -1,4 +1,5 @@
 import type { Locator, Page, Request } from '@playwright/test';
+import { waitForHydration } from '../support/hydration';
 
 export class SupportPage {
   readonly heading: Locator;
@@ -33,11 +34,13 @@ export class SupportPage {
     });
     await this.page.routeWebSocket(/.*/, (socket) => socket.close());
     // CI has no microphone. A silent stream lets the call button reach the server-side voice check.
+    // Patched on the prototype: WebKit does not always hand the page the same mediaDevices object.
     await this.page.addInitScript(() => {
       const getUserMedia = async () => new MediaStream();
-      if (navigator.mediaDevices) {
-        Object.defineProperty(navigator.mediaDevices, 'getUserMedia', { value: getUserMedia, configurable: true });
-      } else {
+      if (typeof MediaDevices !== 'undefined') {
+        Object.defineProperty(MediaDevices.prototype, 'getUserMedia', { value: getUserMedia, configurable: true, writable: true });
+      }
+      if (!navigator.mediaDevices) {
         Object.defineProperty(navigator, 'mediaDevices', { value: { getUserMedia }, configurable: true });
       }
     });
@@ -45,5 +48,6 @@ export class SupportPage {
 
   async goto() {
     await this.page.goto('/support/');
+    await waitForHydration(this.callButton);
   }
 }

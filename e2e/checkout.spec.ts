@@ -13,6 +13,7 @@ test.describe('Checkout with one traveler', () => {
     await expect(page).toHaveURL(/\/checkout\?/);
     await expect(checkout.step).toBeVisible();
     await expect(checkout.heading).toBeVisible();
+    await checkout.ready();
   });
 
   test('results to booked with sample details', async ({ checkout }) => {

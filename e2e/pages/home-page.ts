@@ -1,4 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
+import { waitForHydration } from '../support/hydration';
 import { SearchFormSection } from './search-form';
 
 export class HomePage {
@@ -14,6 +15,7 @@ export class HomePage {
 
   async goto() {
     await this.page.goto('/');
+    await waitForHydration(this.search.submit);
   }
 
   popularRoute(from: string, to: string): Locator {

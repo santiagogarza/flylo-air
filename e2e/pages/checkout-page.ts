@@ -1,4 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
+import { waitForHydration } from '../support/hydration';
 
 export class CheckoutPage {
   readonly step: Locator;
@@ -35,5 +36,9 @@ export class CheckoutPage {
     this.summary = page.getByRole('complementary', { name: /→/ });
     this.booked = page.getByRole('heading', { level: 1, name: "You're booked" });
     this.bookingReference = page.getByText(/^FLY-\d{5}$/);
+  }
+
+  async ready() {
+    await waitForHydration(this.pay);
   }
 }
