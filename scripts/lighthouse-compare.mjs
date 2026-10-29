@@ -134,22 +134,25 @@ function gaugesHtml() {
   </style></head><body>
   <header><p class="eyebrow">Fly more. Pay less. Load faster.</p><h1>FlyLo-Air Lighthouse: before vs after</h1>
   <p>Production build · Lighthouse ${after.lighthouseVersion} · mobile preset gauges (desktop performance on the right of each side) · median of ${after.runs} runs</p></header>
-  <main>${rows}</main></body></html>`;
+  <main>${rows}</main>${MEASURE}</body></html>`;
 }
 
 async function filmstripHtml() {
   const strip = async (label, page, preset) => {
     const lhr = await readJson(path.join('perf', label, `${page.id}.${preset}.json`));
+    // Thumbnails come from the observed trace, so frames are marked with the observed paint times;
+    // the simulated slow-4G values Lighthouse scores are shown in the title.
     const frames = lhr.audits['screenshot-thumbnails']?.details?.items ?? [];
+    const observed = lhr.audits.metrics?.details?.items?.[0] ?? {};
     const lcp = lhr.audits['largest-contentful-paint']?.numericValue ?? 0;
     const fcp = lhr.audits['first-contentful-paint']?.numericValue ?? 0;
     const cells = frames
       .map((frame) => {
-        const mark = frame.timing >= lcp ? ' lcp' : frame.timing >= fcp ? ' fcp' : '';
+        const mark = frame.timing >= observed.observedLargestContentfulPaint ? ' lcp' : frame.timing >= observed.observedFirstContentfulPaint ? ' fcp' : '';
         return `<figure class="frame${mark}"><img src="${frame.data}" alt=""><figcaption>${(frame.timing / 1000).toFixed(1)} s</figcaption></figure>`;
       })
       .join('');
-    return `<div class="strip"><p class="strip-title">${label === args.before ? 'Before' : 'After'} · FCP ${(fcp / 1000).toFixed(2)} s · LCP ${(lcp / 1000).toFixed(2)} s</p><div class="frames">${cells}</div></div>`;
+    return `<div class="strip"><p class="strip-title">${label === args.before ? 'Before' : 'After'} · simulated slow 4G: FCP ${(fcp / 1000).toFixed(2)} s, LCP ${(lcp / 1000).toFixed(2)} s · observed LCP ${Math.round(observed.observedLargestContentfulPaint ?? 0)} ms · ${(lhr.audits['network-requests']?.details?.items ?? []).length} requests</p><div class="frames">${cells}</div></div>`;
   };
   const sections = [];
   for (const page of after.pages) {
@@ -168,28 +171,29 @@ async function filmstripHtml() {
   .legend span { display:inline-block; width:12px; height:12px; border-radius:3px; vertical-align:-1px; margin:0 4px 0 12px; }
   </style></head><body>
   <header><p class="eyebrow">Page load comparison</p><h1>FlyLo-Air filmstrip: before vs after</h1>
-  <p class="legend">Median mobile run, simulated slow 4G.<span style="background:#ffa400"></span>after first paint<span style="background:#0cce6b"></span>after largest paint</p></header>
-  <main>${sections.join('\n')}</main></body></html>`;
+  <p class="legend">Median mobile run. Frames from the observed trace.<span style="background:#ffa400"></span>after first paint<span style="background:#0cce6b"></span>after largest paint</p></header>
+  <main>${sections.join('\n')}</main>${MEASURE}</body></html>`;
 }
 
-function screenshot(htmlFile, pngFile, width, height) {
-  execFileSync(chromeLauncher.Launcher.getInstallations()[0], [
-    '--headless=new',
-    '--no-sandbox',
-    '--disable-gpu',
-    '--hide-scrollbars',
-    '--force-device-scale-factor=1',
-    `--window-size=${width},${height}`,
-    `--screenshot=${path.resolve(pngFile)}`,
-    pathToFileURL(path.resolve(htmlFile)).href,
-  ], { stdio: 'ignore' });
+const MEASURE = '<script>document.documentElement.dataset.height = document.documentElement.scrollHeight</script>';
+
+function chrome(flags, htmlFile) {
+  const chromePath = chromeLauncher.Launcher.getInstallations()[0];
+  const base = ['--headless=new', '--no-sandbox', '--disable-gpu', '--hide-scrollbars', '--force-device-scale-factor=1'];
+  return execFileSync(chromePath, [...base, ...flags, pathToFileURL(path.resolve(htmlFile)).href], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'ignore'] });
+}
+
+function screenshot(htmlFile, pngFile, width) {
+  const dom = chrome([`--window-size=${width},800`, '--dump-dom'], htmlFile);
+  const height = Number(/data-height="(\d+)"/.exec(dom)?.[1] ?? 1200);
+  chrome([`--window-size=${width},${height}`, `--screenshot=${path.resolve(pngFile)}`], htmlFile);
 }
 
 await mkdir(outDir, { recursive: true });
 await writeFile(path.join(outDir, 'comparison.md'), comparisonMarkdown());
 await writeFile(path.join(outDir, 'gauges.html'), gaugesHtml());
 await writeFile(path.join(outDir, 'filmstrip.html'), await filmstripHtml());
-screenshot(path.join(outDir, 'gauges.html'), path.join(outDir, 'gauges.png'), 1600, 190 + after.pages.length * 172);
-screenshot(path.join(outDir, 'filmstrip.html'), path.join(outDir, 'filmstrip.png'), 1600, 160 + after.pages.length * 330);
+screenshot(path.join(outDir, 'gauges.html'), path.join(outDir, 'gauges.png'), 1600);
+screenshot(path.join(outDir, 'filmstrip.html'), path.join(outDir, 'filmstrip.png'), 1600);
 console.log(comparisonMarkdown());
 console.log(`Saved ${outDir}/comparison.md, gauges.png and filmstrip.png`);
