@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { cloneElement, useRef, useState } from 'react';
-import { CheckIcon, LockIcon } from '@/components/icons';
+import { CheckIcon, LockIcon, PlaneIcon } from '@/components/icons';
 import { findAirport } from '@/lib/airports';
+import { boardingPassHref } from '@/lib/boarding';
 import { formatDuration, formatTripDate, type Fare, type Flight } from '@/lib/flights';
 import { DEMO_CARD, formatCardNumber, formatExpiry, validateCard, type CardDetails, type CardErrors } from '@/lib/payment';
 import { buildLineItems, formatCents, quoteCents, toCents, type Traveler } from '@/lib/pricing';
@@ -122,6 +123,13 @@ export function CheckoutForm({ flight, fare, passengers }: Props) {
           {travelers.length} {travelers.length === 1 ? 'traveler' : 'travelers'} · {formatCents(totalCents)} paid. We sent the details to {email}.
         </p>
         <div className="inline-actions">
+          <Link
+            className="btn btn-pass"
+            href={boardingPassHref(flight.id, fare.key, `${travelers[0].firstName.trim()} ${travelers[0].lastName.trim()}`)}
+          >
+            <PlaneIcon className="btn-icon" />
+            View boarding pass
+          </Link>
           <Link className="btn" href="/">
             Book another trip
           </Link>
