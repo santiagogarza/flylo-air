@@ -43,7 +43,7 @@ npm run e2e:ui                       # Playwright UI mode
 npx playwright show-report
 ```
 
-The `/support/` spec is read-only: it blocks `/api/tickets`, blocks every WebSocket so no call can connect, and only checks that the call button reports voice is not configured. Visual snapshots (home, results, checkout at 1280px) are in `e2e/__screenshots__/`; generated fares, times and dates are masked. After an intended UI change, refresh them with `npx playwright test visual --update-snapshots`. The `e2e` GitHub Actions workflow runs the suite on every pull request and uploads the HTML report and videos as artifacts.
+The `/support/` spec is read-only: it blocks `/api/tickets`, blocks every WebSocket so no call can connect, and only checks that the call button reports voice is not configured. Visual snapshots (home, results, checkout at 1280px) are in `e2e/__screenshots__/`; generated fares, times and dates are masked, and the text is pinned to DejaVu Sans so the Linux baselines match GitHub's Ubuntu runners. After an intended UI change, refresh them with `npx playwright test visual --update-snapshots`. The `e2e` GitHub Actions workflow runs the suite on every pull request and uploads the HTML report and videos as artifacts.
 
 ## Environment variables
 

@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures';
 import { expectedTrip, pickTravelDate } from './support/trips';
 
@@ -9,6 +10,7 @@ test.describe('Visual snapshots at 1280px', () => {
   test('home', async ({ page, home }) => {
     await home.goto();
     await expect(home.heroHeading).toBeVisible();
+    await pinFont(page);
     await expect(page).toHaveScreenshot('home.png', {
       fullPage: true,
       mask: [home.search.date, home.popularRoutes.getByText(/^From \$/)],
@@ -19,6 +21,7 @@ test.describe('Visual snapshots at 1280px', () => {
     const date = pickTravelDate();
     await page.goto(`/results?from=SFO&to=JFK&date=${date}&passengers=1`);
     await expect(results.flightList).toBeVisible();
+    await pinFont(page);
     await expect(page).toHaveScreenshot('results.png', {
       mask: [
         page.getByText(/ · One way · /),
@@ -35,9 +38,18 @@ test.describe('Visual snapshots at 1280px', () => {
     await page.goto(`/results?from=SFO&to=JFK&date=${date}&passengers=1`);
     await results.fareLink(flight, flight.fares[1]).click();
     await expect(checkout.heading).toBeVisible();
+    await pinFont(page);
     await expect(page).toHaveScreenshot('checkout.png', {
       fullPage: true,
       mask: [checkout.pay, checkout.summary.getByRole('paragraph'), checkout.summary.getByRole('list')],
     });
   });
 });
+
+/**
+ * `system-ui` resolves to a different font on each machine (Noto Sans on some Ubuntu
+ * desktops, DejaVu Sans on GitHub's runners), so snapshots pin DejaVu Sans, which ships with Ubuntu.
+ */
+async function pinFont(page: Page) {
+  await page.addStyleTag({ content: ":root { --sans: 'DejaVu Sans', sans-serif; }" });
+}
