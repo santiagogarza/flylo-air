@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ClockIcon, HeadsetIcon, PlaneIcon, SeatIcon } from '@/components/icons';
+import { ClockIcon, HeadsetIcon, RouteArt, SeatIcon } from '@/components/icons';
 import { SearchForm } from '@/components/SearchForm';
 import { findAirport } from '@/lib/airports';
 import { defaultTravelDate, isoDate } from '@/lib/dates';
@@ -22,7 +22,7 @@ export default function HomePage() {
   return (
     <>
       <section className="hero" aria-labelledby="hero-title">
-        <PlaneIcon className="hero-plane" />
+        <RouteArt className="hero-plane" />
         <div className="wrap">
           <p className="eyebrow">Fares that land softly</p>
           <h1 id="hero-title">Fly more. Pay less.</h1>

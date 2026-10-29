@@ -164,7 +164,7 @@ export function CheckoutForm({ flight, fare, passengers }: Props) {
           {travelers.map((traveler, index) => {
             const invalid = errors.travelers[index];
             return (
-              <fieldset key={index} className="traveler" style={{ border: 0, padding: 0, margin: 0 }}>
+              <fieldset key={index} className="traveler">
                 <legend className="visually-hidden">Traveler {index + 1}</legend>
                 <h3 aria-hidden="true">
                   Traveler {index + 1}

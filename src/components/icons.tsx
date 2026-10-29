@@ -18,6 +18,20 @@ export function PlaneIcon({ className }: IconProps) {
   );
 }
 
+export function RouteArt({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 480 220" fill="none" aria-hidden="true" focusable="false">
+      <path d="M20 200C120 60 300 20 440 70" stroke="currentColor" strokeWidth="3" strokeDasharray="2 12" strokeLinecap="round" />
+      <circle cx="20" cy="200" r="8" fill="currentColor" />
+      <g transform="translate(440 70) rotate(18)">
+        <path d="M-34 0 18-16c8-2 14 2 14 8s-6 10-14 8L-34 0Z" fill="currentColor" />
+        <path d="M-6-4-22-34h12L14-8M-6 4-22 34h12L14 8" fill="currentColor" />
+        <path d="M-30-2-40-16h8l10 12M-30 2-40 16h8l10-12" fill="currentColor" />
+      </g>
+    </svg>
+  );
+}
+
 export function PhoneIcon({ className }: IconProps) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">

@@ -140,6 +140,7 @@ function SupportCallSession({ onRestart }: { onRestart: () => void }) {
       ? 'call'
       : 'submit';
   const missing = TICKET_FIELDS.filter((field) => !values[field.name].trim());
+  const started = missing.length < TICKET_FIELDS.length;
 
   useEffect(() => {
     primaryChangedAt.current = Date.now();
@@ -366,6 +367,11 @@ function SupportCallSession({ onRestart }: { onRestart: () => void }) {
             <PrimaryIcon className="btn-icon" />
             {primaryLabel}
           </button>
+          {!inCall && primary === 'call' && started && (
+            <button type="submit" className="btn btn-ghost">
+              Submit
+            </button>
+          )}
           {inCall && primary === 'submit' && (
             <button type="button" className="btn btn-ghost" onClick={() => callRef.current?.hangUp()}>
               Hang up
