@@ -35,7 +35,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
 
       <div className="wrap section">
         <details className="card" style={{ marginBottom: '1.5rem' }}>
-          <summary style={{ cursor: 'pointer', fontWeight: 700 }}>Edit search</summary>
+          <summary className="edit-search">Edit search</summary>
           <div style={{ marginTop: '1rem' }}>
             <SearchForm
               compact
@@ -72,6 +72,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
                   <div>
                     <h3 id={`${flight.id}-title`} className="visually-hidden">
                       {flight.flightNumber}, departs {flight.departs}, arrives {flight.arrives}
+                      {flight.arrivesNextDay ? ' the next day' : ''}
                     </h3>
                     <div className="flight-times">
                       <p className="flight-time" style={{ margin: 0 }}>
@@ -85,7 +86,12 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
                       </div>
                       <p className="flight-time" style={{ margin: 0, textAlign: 'right' }}>
                         {flight.arrives}
-                        {flight.arrivesNextDay && <sup> +1</sup>}
+                        {flight.arrivesNextDay && (
+                          <sup>
+                            <span aria-hidden="true"> +1</span>
+                            <span className="visually-hidden"> next day</span>
+                          </sup>
+                        )}
                         <small>{flight.to}</small>
                       </p>
                     </div>
@@ -100,10 +106,14 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
                         key={fare.key}
                         className="fare-option"
                         href={`/checkout?flight=${encodeURIComponent(flight.id)}&fare=${fare.key}&passengers=${passengers}`}
-                        aria-label={`Select ${fare.name} on ${flight.flightNumber} for ${formatCents(perTravelerCents(fare))} per traveler`}
                       >
+                        <span className="visually-hidden">Select </span>
                         <span className="fare-name">{fare.name}</span>
-                        <span className="fare-price">{formatCents(perTravelerCents(fare))}</span>
+                        <span className="visually-hidden"> fare on {flight.flightNumber},</span>
+                        <span className="fare-price">
+                          {formatCents(perTravelerCents(fare))}
+                          <span className="visually-hidden"> per traveler,</span>
+                        </span>
                         <span className="fare-note">{fare.perks[0]}</span>
                       </Link>
                     ))}
