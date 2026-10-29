@@ -32,6 +32,19 @@ npm run typecheck
 npm run build
 ```
 
+## End-to-end tests
+
+Playwright specs live in `e2e/` (page objects in `e2e/pages/`). The suite builds the site and serves it on port 3000, then runs in desktop Chromium and a 390px mobile Safari (WebKit) viewport, recording traces, screenshots and videos.
+
+```bash
+npx playwright install --with-deps   # once
+npm run e2e                          # headless run, HTML report in playwright-report/
+npm run e2e:ui                       # Playwright UI mode
+npx playwright show-report
+```
+
+The `/support/` spec is read-only: it blocks `/api/tickets`, blocks every WebSocket so no call can connect, and only checks that the call button reports voice is not configured. Visual snapshots (home, results, checkout at 1280px) are in `e2e/__screenshots__/`; generated fares, times and dates are masked. After an intended UI change, refresh them with `npx playwright test visual --update-snapshots`. The `e2e` GitHub Actions workflow runs the suite on every pull request and uploads the HTML report and videos as artifacts.
+
 ## Environment variables
 
 All of these are **server-only**. Never prefix them with `NEXT_PUBLIC_`, and never commit them.
