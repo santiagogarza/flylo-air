@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { cloneElement, useRef, useState } from 'react';
-import { CheckIcon, LockIcon } from '@/components/icons';
+import { CheckIcon, LockIcon, SeatIcon } from '@/components/icons';
 import { findAirport } from '@/lib/airports';
 import { formatDuration, formatTripDate, type Fare, type Flight } from '@/lib/flights';
 import { DEMO_CARD, formatCardNumber, formatExpiry, validateCard, type CardDetails, type CardErrors } from '@/lib/payment';
@@ -310,6 +310,13 @@ export function CheckoutForm({ flight, fare, passengers }: Props) {
             <li key={perk}>{perk}</li>
           ))}
         </ul>
+        <Link
+          className="btn btn-ghost choose-seats-link"
+          href={`/seats?flight=${encodeURIComponent(flight.id)}&fare=${fare.key}&passengers=${passengers}`}
+        >
+          <SeatIcon className="btn-icon" />
+          Choose seats
+        </Link>
       </aside>
     </div>
   );
