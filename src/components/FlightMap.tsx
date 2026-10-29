@@ -90,7 +90,7 @@ export function FlightMap({ flights, selected, dimmed, getNow, reducedMotion, de
   const glowId = useId().replace(/:/g, '');
   const svgRef = useRef<SVGSVGElement>(null);
   const viewportRef = useRef<SVGGElement>(null);
-  const flownRef = useRef<SVGPathElement>(null);
+  const flownRef = useRef<SVGGElement>(null);
   const airportRefs = useRef(new Map<string, SVGGElement>());
   const planeRefs = useRef(new Map<string, SVGGElement>());
   const viewRef = useRef<View>(FULL_VIEW);
@@ -127,12 +127,10 @@ export function FlightMap({ flights, selected, dimmed, getNow, reducedMotion, de
     }
 
     const flown = flownRef.current;
-    if (flown) {
-      const sel = current.selected;
-      flown.setAttribute(
-        'd',
-        sel ? pathFromPoints(flownPoints(routePoints(sel.from, sel.to), flightProgress(sel.departMs, sel.arriveMs, nowMs))) : '',
-      );
+    const sel = current.selected;
+    if (flown && sel) {
+      const d = pathFromPoints(flownPoints(routePoints(sel.from, sel.to), flightProgress(sel.departMs, sel.arriveMs, nowMs)));
+      for (const path of flown.children) path.setAttribute('d', d);
     }
   }
 
@@ -176,6 +174,14 @@ export function FlightMap({ flights, selected, dimmed, getNow, reducedMotion, de
         <radialGradient id={`${glowId}-sea`} cx="50%" cy="38%" r="75%">
           <stop offset="0%" stopColor="#163a6b" />
           <stop offset="100%" stopColor="#071a33" />
+        </radialGradient>
+        <radialGradient id={`${glowId}-halo`}>
+          <stop offset="0%" stopColor="#fde68a" stopOpacity="0.55" />
+          <stop offset="100%" stopColor="#fde68a" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id={`${glowId}-halo-selected`}>
+          <stop offset="0%" stopColor="#f97316" stopOpacity="0.7" />
+          <stop offset="100%" stopColor="#f97316" stopOpacity="0" />
         </radialGradient>
         <filter id={`${glowId}-glow`} x="-100%" y="-100%" width="300%" height="300%">
           <feGaussianBlur stdDeviation="3" result="blur" />
@@ -225,7 +231,10 @@ export function FlightMap({ flights, selected, dimmed, getNow, reducedMotion, de
         {selectedRoute && (
           <g className="map-focus">
             <path className="map-focus-remaining" d={pathFromPoints(selectedRoute)} pathLength={1} />
-            <path ref={flownRef} className="map-focus-flown" filter={`url(#${glowId}-glow)`} />
+            <g ref={flownRef}>
+              <path className="map-focus-flown-glow" />
+              <path className="map-focus-flown" />
+            </g>
           </g>
         )}
       </g>
@@ -261,12 +270,10 @@ export function FlightMap({ flights, selected, dimmed, getNow, reducedMotion, de
               onClick={() => onSelect(flight.id)}
             >
               <g>
-                <circle className="map-plane-hit" r="15" />
-                <g filter={`url(#${glowId}-glow)`}>
-                  <svg x={-size / 2} y={-size / 2} width={size} height={size} overflow="visible">
-                    <PlaneIcon className="map-plane-icon" />
-                  </svg>
-                </g>
+                <circle r={size * 0.8} fill={`url(#${glowId}-${isSelected ? 'halo-selected' : 'halo'})`} />
+                <svg x={-size / 2} y={-size / 2} width={size} height={size} overflow="visible">
+                  <PlaneIcon className="map-plane-icon" />
+                </svg>
               </g>
               <text className="map-plane-label" x="14" y="-12">
                 {flight.flightNumber}

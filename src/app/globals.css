@@ -1065,7 +1065,7 @@ textarea:focus {
   background:
     radial-gradient(circle at 88% 10%, rgba(249, 115, 22, 0.22), transparent 30%),
     var(--navy);
-  padding-bottom: 1.25rem;
+  padding: 1.75rem 0 1rem;
 }
 
 .tracker {
@@ -1317,6 +1317,15 @@ textarea:focus {
   }
 }
 
+.map-focus-flown-glow {
+  fill: none;
+  stroke: var(--sun);
+  stroke-opacity: 0.3;
+  stroke-width: calc(9px / var(--k));
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .map-focus-flown {
   fill: none;
   stroke: #fdba74;
@@ -1385,10 +1394,6 @@ textarea:focus {
 
 .map-plane.is-dim {
   opacity: 0.18;
-}
-
-.map-plane-hit {
-  fill: transparent;
 }
 
 .map-plane-icon {

@@ -2,12 +2,12 @@ import { greatCirclePath, screenHeading, type LatLon, type Point } from './fligh
 import { HAWAII_OUTLINE, LOWER_48_OUTLINE, STATE_BORDERS } from './us-map-data';
 
 export const MAP_WIDTH = 960;
-export const MAP_HEIGHT = 600;
+export const MAP_HEIGHT = 560;
 
 type Box = { x: number; y: number; width: number; height: number };
 
 export const MAINLAND_BOX: Box = { x: 64, y: 22, width: MAP_WIDTH - 148, height: MAP_HEIGHT - 44 };
-export const HAWAII_INSET: Box = { x: 22, y: 468, width: 228, height: 118 };
+export const HAWAII_INSET: Box = { x: 22, y: MAP_HEIGHT - 134, width: 228, height: 118 };
 
 type Projection = (point: LatLon) => [number, number];
 
