@@ -1,0 +1,518 @@
+{
+  "label": "before",
+  "measuredAt": "2026-10-29T04:18:11.320Z",
+  "travelDate": "2026-11-12",
+  "runs": 3,
+  "lighthouseVersion": "13.6.0",
+  "chrome": "Chrome/156.0.0.0",
+  "pages": [
+    {
+      "id": "home",
+      "name": "Home",
+      "path": "/",
+      "presets": {
+        "mobile": {
+          "median": {
+            "performance": 100,
+            "accessibility": 100,
+            "bestPractices": 96,
+            "seo": 60,
+            "fcpMs": 760.0305000000001,
+            "lcpMs": 760.0305000000001,
+            "cls": 0,
+            "tbtMs": 23,
+            "speedIndexMs": 760.0305000000001,
+            "ttfbMs": 12,
+            "jsKb": 148.8779296875,
+            "totalKb": 165.96875
+          },
+          "runs": [
+            {
+              "performance": 100,
+              "accessibility": 100,
+              "bestPractices": 96,
+              "seo": 60,
+              "fcpMs": 760.0305000000001,
+              "lcpMs": 760.0305000000001,
+              "cls": 0,
+              "tbtMs": 23,
+              "speedIndexMs": 760.0305000000001,
+              "ttfbMs": 12,
+              "jsKb": 148.8779296875,
+              "totalKb": 165.96875
+            },
+            {
+              "performance": 100,
+              "accessibility": 100,
+              "bestPractices": 96,
+              "seo": 60,
+              "fcpMs": 754.1800000000001,
+              "lcpMs": 754.1800000000001,
+              "cls": 0,
+              "tbtMs": 22,
+              "speedIndexMs": 754.1800000000001,
+              "ttfbMs": 8,
+              "jsKb": 148.8779296875,
+              "totalKb": 165.2177734375
+            },
+            {
+              "performance": 100,
+              "accessibility": 100,
+              "bestPractices": 96,
+              "seo": 60,
+              "fcpMs": 755.0373999999999,
+              "lcpMs": 755.0373999999999,
+              "cls": 0,
+              "tbtMs": 31.5,
+              "speedIndexMs": 755.0373999999999,
+              "ttfbMs": 9,
+              "jsKb": 148.8779296875,
+              "totalKb": 165.7841796875
+            }
+          ]
+        },
+        "desktop": {
+          "median": {
+            "performance": 100,
+            "accessibility": 100,
+            "bestPractices": 96,
+            "seo": 60,
+            "fcpMs": 204.83659999999998,
+            "lcpMs": 204.83659999999998,
+            "cls": 0,
+            "tbtMs": 0,
+            "speedIndexMs": 204.83659999999998,
+            "ttfbMs": 5,
+            "jsKb": 148.8779296875,
+            "totalKb": 169.9033203125
+          },
+          "runs": [
+            {
+              "performance": 100,
+              "accessibility": 100,
+              "bestPractices": 96,
+              "seo": 60,
+              "fcpMs": 207.8091,
+              "lcpMs": 207.8091,
+              "cls": 0,
+              "tbtMs": 0,
+              "speedIndexMs": 207.8091,
+              "ttfbMs": 8,
+              "jsKb": 148.8779296875,
+              "totalKb": 168.9482421875
+            },
+            {
+              "performance": 100,
+              "accessibility": 100,
+              "bestPractices": 96,
+              "seo": 60,
+              "fcpMs": 204.5811,
+              "lcpMs": 204.5811,
+              "cls": 0,
+              "tbtMs": 0,
+              "speedIndexMs": 204.5811,
+              "ttfbMs": 6,
+              "jsKb": 148.8779296875,
+              "totalKb": 169.53125
+            },
+            {
+              "performance": 100,
+              "accessibility": 100,
+              "bestPractices": 96,
+              "seo": 60,
+              "fcpMs": 204.83659999999998,
+              "lcpMs": 204.83659999999998,
+              "cls": 0,
+              "tbtMs": 0,
+              "speedIndexMs": 204.83659999999998,
+              "ttfbMs": 5,
+              "jsKb": 148.8779296875,
+              "totalKb": 169.9033203125
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "results",
+      "name": "Results",
+      "path": "/results?from=SFO&to=JFK&date=2026-11-12&passengers=1",
+      "presets": {
+        "mobile": {
+          "median": {
+            "performance": 100,
+            "accessibility": 100,
+            "bestPractices": 96,
+            "seo": 60,
+            "fcpMs": 756.1291000000001,
+            "lcpMs": 756.1291000000001,
+            "cls": 0,
+            "tbtMs": 24,
+            "speedIndexMs": 756.1291000000001,
+            "ttfbMs": 7,
+            "jsKb": 148.8779296875,
+            "totalKb": 173.63671875
+          },
+          "runs": [
+            {
+              "performance": 100,
+              "accessibility": 100,
+              "bestPractices": 96,
+              "seo": 60,
+              "fcpMs": 755.9277,
+              "lcpMs": 755.9277,
+              "cls": 0,
+              "tbtMs": 23.000000000000227,
+              "speedIndexMs": 755.9277,
+              "ttfbMs": 8,
+              "jsKb": 148.8779296875,
+              "totalKb": 173.1591796875
+            },
+            {
+              "performance": 100,
+              "accessibility": 100,
+              "bestPractices": 96,
+              "seo": 60,
+              "fcpMs": 756.576,
+              "lcpMs": 756.576,
+              "cls": 0,
+              "tbtMs": 24,
+              "speedIndexMs": 756.576,
+              "ttfbMs": 8,
+              "jsKb": 148.8779296875,
+              "totalKb": 174.3544921875
+            },
+            {
+              "performance": 100,
+              "accessibility": 100,
+              "bestPractices": 96,
+              "seo": 60,
+              "fcpMs": 756.1291000000001,
+              "lcpMs": 756.1291000000001,
+              "cls": 0,
+              "tbtMs": 24,
+              "speedIndexMs": 756.1291000000001,
+              "ttfbMs": 7,
+              "jsKb": 148.8779296875,
+              "totalKb": 173.63671875
+            }
+          ]
+        },
+        "desktop": {
+          "median": {
+            "performance": 100,
+            "accessibility": 100,
+            "bestPractices": 96,
+            "seo": 60,
+            "fcpMs": 205.7701,
+            "lcpMs": 205.7701,
+            "cls": 0,
+            "tbtMs": 0,
+            "speedIndexMs": 205.7701,
+            "ttfbMs": 7,
+            "jsKb": 148.8779296875,
+            "totalKb": 178.076171875
+          },
+          "runs": [
+            {
+              "performance": 100,
+              "accessibility": 100,
+              "bestPractices": 96,
+              "seo": 60,
+              "fcpMs": 206.19459999999998,
+              "lcpMs": 206.19459999999998,
+              "cls": 0,
+              "tbtMs": 0,
+              "speedIndexMs": 206.19459999999998,
+              "ttfbMs": 7,
+              "jsKb": 148.8779296875,
+              "totalKb": 178.2900390625
+            },
+            {
+              "performance": 100,
+              "accessibility": 100,
+              "bestPractices": 96,
+              "seo": 60,
+              "fcpMs": 205.7701,
+              "lcpMs": 205.7701,
+              "cls": 0,
+              "tbtMs": 0,
+              "speedIndexMs": 205.7701,
+              "ttfbMs": 7,
+              "jsKb": 148.8779296875,
+              "totalKb": 178.076171875
+            },
+            {
+              "performance": 100,
+              "accessibility": 100,
+              "bestPractices": 96,
+              "seo": 60,
+              "fcpMs": 205.50400000000002,
+              "lcpMs": 205.50400000000002,
+              "cls": 0,
+              "tbtMs": 0,
+              "speedIndexMs": 205.50400000000002,
+              "ttfbMs": 6,
+              "jsKb": 148.8779296875,
+              "totalKb": 177.25
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "checkout",
+      "name": "Checkout",
+      "path": "/checkout?flight=SFO-JFK-2026-11-12-0&fare=basic&passengers=1",
+      "presets": {
+        "mobile": {
+          "median": {
+            "performance": 100,
+            "accessibility": 100,
+            "bestPractices": 96,
+            "seo": 60,
+            "fcpMs": 753.8877,
+            "lcpMs": 753.8877,
+            "cls": 0,
+            "tbtMs": 46,
+            "speedIndexMs": 753.8877,
+            "ttfbMs": 6,
+            "jsKb": 151.99609375,
+            "totalKb": 166.5341796875
+          },
+          "runs": [
+            {
+              "performance": 100,
+              "accessibility": 100,
+              "bestPractices": 96,
+              "seo": 60,
+              "fcpMs": 753.8877,
+              "lcpMs": 753.8877,
+              "cls": 0,
+              "tbtMs": 46,
+              "speedIndexMs": 753.8877,
+              "ttfbMs": 6,
+              "jsKb": 151.99609375,
+              "totalKb": 166.5341796875
+            },
+            {
+              "performance": 100,
+              "accessibility": 100,
+              "bestPractices": 96,
+              "seo": 60,
+              "fcpMs": 753.4015999999999,
+              "lcpMs": 753.4015999999999,
+              "cls": 0,
+              "tbtMs": 46.00000000000023,
+              "speedIndexMs": 753.4015999999999,
+              "ttfbMs": 6,
+              "jsKb": 151.99609375,
+              "totalKb": 166.533203125
+            },
+            {
+              "performance": 100,
+              "accessibility": 100,
+              "bestPractices": 96,
+              "seo": 60,
+              "fcpMs": 754.4117000000001,
+              "lcpMs": 1654.4117,
+              "cls": 0,
+              "tbtMs": 23,
+              "speedIndexMs": 754.4117000000001,
+              "ttfbMs": 5,
+              "jsKb": 151.99609375,
+              "totalKb": 166.673828125
+            }
+          ]
+        },
+        "desktop": {
+          "median": {
+            "performance": 100,
+            "accessibility": 100,
+            "bestPractices": 96,
+            "seo": 60,
+            "fcpMs": 205.0424,
+            "lcpMs": 205.0424,
+            "cls": 0,
+            "tbtMs": 0,
+            "speedIndexMs": 205.0424,
+            "ttfbMs": 5,
+            "jsKb": 151.99609375,
+            "totalKb": 166.5341796875
+          },
+          "runs": [
+            {
+              "performance": 100,
+              "accessibility": 100,
+              "bestPractices": 96,
+              "seo": 60,
+              "fcpMs": 204.38049999999998,
+              "lcpMs": 204.38049999999998,
+              "cls": 0,
+              "tbtMs": 0,
+              "speedIndexMs": 204.38049999999998,
+              "ttfbMs": 5,
+              "jsKb": 151.99609375,
+              "totalKb": 166.5341796875
+            },
+            {
+              "performance": 100,
+              "accessibility": 100,
+              "bestPractices": 96,
+              "seo": 60,
+              "fcpMs": 205.29790000000003,
+              "lcpMs": 205.29790000000003,
+              "cls": 0,
+              "tbtMs": 0,
+              "speedIndexMs": 205.29790000000003,
+              "ttfbMs": 6,
+              "jsKb": 151.99609375,
+              "totalKb": 166.533203125
+            },
+            {
+              "performance": 100,
+              "accessibility": 100,
+              "bestPractices": 96,
+              "seo": 60,
+              "fcpMs": 205.0424,
+              "lcpMs": 205.0424,
+              "cls": 0,
+              "tbtMs": 0,
+              "speedIndexMs": 205.0424,
+              "ttfbMs": 5,
+              "jsKb": 151.99609375,
+              "totalKb": 166.5341796875
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "support",
+      "name": "Support (measure only)",
+      "path": "/support/",
+      "presets": {
+        "mobile": {
+          "median": {
+            "performance": 100,
+            "accessibility": 100,
+            "bestPractices": 96,
+            "seo": 60,
+            "fcpMs": 904.8494999999999,
+            "lcpMs": 904.8494999999999,
+            "cls": 0,
+            "tbtMs": 23,
+            "speedIndexMs": 904.8494999999999,
+            "ttfbMs": 2,
+            "jsKb": 147.0390625,
+            "totalKb": 161.109375
+          },
+          "runs": [
+            {
+              "performance": 100,
+              "accessibility": 100,
+              "bestPractices": 96,
+              "seo": 60,
+              "fcpMs": 904.9228499999999,
+              "lcpMs": 904.9228499999999,
+              "cls": 0,
+              "tbtMs": 22,
+              "speedIndexMs": 904.9228499999999,
+              "ttfbMs": 2,
+              "jsKb": 147.0390625,
+              "totalKb": 161.1083984375
+            },
+            {
+              "performance": 100,
+              "accessibility": 100,
+              "bestPractices": 96,
+              "seo": 60,
+              "fcpMs": 904.8494999999999,
+              "lcpMs": 904.8494999999999,
+              "cls": 0,
+              "tbtMs": 23,
+              "speedIndexMs": 904.8494999999999,
+              "ttfbMs": 2,
+              "jsKb": 147.0390625,
+              "totalKb": 161.109375
+            },
+            {
+              "performance": 100,
+              "accessibility": 100,
+              "bestPractices": 96,
+              "seo": 60,
+              "fcpMs": 904.48965,
+              "lcpMs": 904.48965,
+              "cls": 0,
+              "tbtMs": 23,
+              "speedIndexMs": 904.48965,
+              "ttfbMs": 2,
+              "jsKb": 147.0390625,
+              "totalKb": 161.240234375
+            }
+          ]
+        },
+        "desktop": {
+          "median": {
+            "performance": 100,
+            "accessibility": 100,
+            "bestPractices": 96,
+            "seo": 60,
+            "fcpMs": 246.98475,
+            "lcpMs": 246.98475,
+            "cls": 0,
+            "tbtMs": 0,
+            "speedIndexMs": 246.98475,
+            "ttfbMs": 2,
+            "jsKb": 147.0390625,
+            "totalKb": 161.1083984375
+          },
+          "runs": [
+            {
+              "performance": 100,
+              "accessibility": 100,
+              "bestPractices": 96,
+              "seo": 60,
+              "fcpMs": 245.26395,
+              "lcpMs": 245.26395,
+              "cls": 0,
+              "tbtMs": 0,
+              "speedIndexMs": 245.26395,
+              "ttfbMs": 2,
+              "jsKb": 147.0390625,
+              "totalKb": 161.4384765625
+            },
+            {
+              "performance": 100,
+              "accessibility": 100,
+              "bestPractices": 96,
+              "seo": 60,
+              "fcpMs": 246.98475,
+              "lcpMs": 246.98475,
+              "cls": 0,
+              "tbtMs": 0,
+              "speedIndexMs": 246.98475,
+              "ttfbMs": 2,
+              "jsKb": 147.0390625,
+              "totalKb": 161.1083984375
+            },
+            {
+              "performance": 100,
+              "accessibility": 100,
+              "bestPractices": 96,
+              "seo": 60,
+              "fcpMs": 247.99469999999997,
+              "lcpMs": 247.99469999999997,
+              "cls": 0,
+              "tbtMs": 0,
+              "speedIndexMs": 247.99469999999997,
+              "ttfbMs": 2,
+              "jsKb": 147.0390625,
+              "totalKb": 161.103515625
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
