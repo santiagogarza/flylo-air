@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures/echo';
-import { field, fillLakeline, LAKELINE_URL, MAYA, submit } from './fixtures/intake';
+import { field, fillLakeline, LAKELINE_URL, LIVE_TICKET_ID_PATTERN, MAYA, submit } from './fixtures/intake';
 import { saveMedia } from './fixtures/media';
 
 const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
@@ -75,7 +75,7 @@ test.describe('/intake?scenario=lakeline-hardship', () => {
       },
     });
 
-    await expect(page.getByTestId('ticket-id')).toHaveText('LAF-REQ-1001');
+    await expect(page.getByTestId('ticket-id')).toHaveText(LIVE_TICKET_ID_PATTERN);
     await expect(page.getByRole('heading', { name: 'Request received' })).toBeVisible();
     await expect(page.getByText('Submitting does not approve a change.')).toBeVisible();
     await saveMedia(page, testInfo, 'intake-lakeline-received');
@@ -88,7 +88,7 @@ test.describe('/intake?scenario=lakeline-hardship', () => {
     expect(Object.keys(body)).toEqual(['scenario', 'id', 'createdAt', 'channel', 'fields', 'category', 'summary', 'description']);
     expect(body).toMatchObject({
       scenario: 'lakeline-hardship',
-      id: 'LAF-REQ-1001',
+      id: expect.stringMatching(LIVE_TICKET_ID_PATTERN),
       createdAt: expect.stringMatching(ISO),
       channel: 'web',
       category: 'Payment extension',
@@ -126,7 +126,7 @@ test.describe('/intake?scenario=lakeline-hardship', () => {
     await fillLakeline(page, MAYA);
     await page.waitForTimeout(700);
     await page.getByRole('button', { name: 'Submit', exact: true }).dblclick();
-    await expect(page.getByTestId('ticket-id')).toHaveText('LAF-REQ-1001');
+    await expect(page.getByTestId('ticket-id')).toHaveText(LIVE_TICKET_ID_PATTERN);
     await page.waitForTimeout(500);
     expect(await echo.requests('/lakeline-hook')).toHaveLength(1);
   });
@@ -140,7 +140,7 @@ test.describe('/intake?scenario=lakeline-hardship', () => {
     await input.press('Enter');
     await input.press('Enter').catch(() => undefined);
     await input.press('Enter').catch(() => undefined);
-    await expect(page.getByTestId('ticket-id')).toHaveText('LAF-REQ-1001');
+    await expect(page.getByTestId('ticket-id')).toHaveText(LIVE_TICKET_ID_PATTERN);
     expect(await echo.requests('/lakeline-hook')).toHaveLength(1);
   });
 
@@ -150,7 +150,7 @@ test.describe('/intake?scenario=lakeline-hardship', () => {
     await fillLakeline(page, MAYA);
     await submit(page);
     await expect(page.getByRole('button', { name: 'Sending…' })).toBeDisabled();
-    await expect(page.getByTestId('ticket-id')).toHaveText('LAF-REQ-1001');
+    await expect(page.getByTestId('ticket-id')).toHaveText(LIVE_TICKET_ID_PATTERN);
   });
 
   for (const status of [500, 404, 302]) {
@@ -204,7 +204,7 @@ test.describe('/intake?scenario=lakeline-hardship', () => {
     await page.goto(LAKELINE_URL);
     await fillLakeline(page, { ...MAYA, fullName: 'María José Núñez', reason, callbackWindow: 'Por las tardes' });
     await submit(page);
-    await expect(page.getByTestId('ticket-id')).toHaveText('LAF-REQ-1001');
+    await expect(page.getByTestId('ticket-id')).toHaveText(LIVE_TICKET_ID_PATTERN);
     await expect(page.getByText('Thanks, María.')).toBeVisible();
     const [hook] = await echo.waitForRequests(1, '/lakeline-hook');
     expect((hook.body as { fields: Record<string, string> }).fields).toMatchObject({
@@ -219,7 +219,7 @@ test.describe('/intake?scenario=lakeline-hardship', () => {
     await fillLakeline(page, { ...MAYA, reason: 'x'.repeat(10) + ' word'.repeat(600) });
     expect((await field(page, 'reason').inputValue()).length).toBe(2000);
     await submit(page);
-    await expect(page.getByTestId('ticket-id')).toHaveText('LAF-REQ-1001');
+    await expect(page.getByTestId('ticket-id')).toHaveText(LIVE_TICKET_ID_PATTERN);
     const [hook] = await echo.waitForRequests(1, '/lakeline-hook');
     expect((hook.body as { fields: { reason: string } }).fields.reason.length).toBe(2000);
   });
@@ -246,7 +246,7 @@ test.describe('/intake?scenario=lakeline-hardship', () => {
     await page.keyboard.type('Afternoons');
     await page.waitForTimeout(700);
     await page.keyboard.press('Enter');
-    await expect(page.getByTestId('ticket-id')).toHaveText('LAF-REQ-1001');
+    await expect(page.getByTestId('ticket-id')).toHaveText(LIVE_TICKET_ID_PATTERN);
     expect(await echo.requests('/lakeline-hook')).toHaveLength(1);
   });
 

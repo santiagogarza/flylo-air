@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures/echo';
-import { field, fillLakeline, LAKELINE_URL, submit } from './fixtures/intake';
+import { field, fillLakeline, LAKELINE_URL, LIVE_TICKET_ID_PATTERN, submit } from './fixtures/intake';
 import { LAKELINE_CASES, type LakelineInput } from '../test/fixtures/lakeline-cases';
 
 const MAX_LENGTH: Partial<Record<keyof LakelineInput, number>> = { fullName: 120, loanNumber: 40, email: 254, reason: 2000, callbackWindow: 120 };
@@ -28,7 +28,7 @@ test.describe('every synthetic Lakeline case through the intake form', () => {
       await submit(page);
 
       if (invalid.length === 0) {
-        await expect(page.getByTestId('ticket-id')).toHaveText('LAF-REQ-1001');
+        await expect(page.getByTestId('ticket-id')).toHaveText(LIVE_TICKET_ID_PATTERN);
         const [hook] = await echo.waitForRequests(1, '/lakeline-hook');
         const body = hook.body as { fields: Record<string, string>; category: string };
         if (item.expect.loanNumber) expect(body.fields.loanNumber).toBe(item.expect.loanNumber);

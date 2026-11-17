@@ -15,11 +15,11 @@ const scenario = getScenario('lakeline-hardship')!;
 const KEY = 'qa-ingest-key';
 
 const saved: Record<string, string | undefined> = {};
-beforeEach(() => {
+beforeEach(async () => {
   for (const key of ['DEMO_RESET_KEY', 'CASES_INGEST_KEY']) saved[key] = process.env[key];
   process.env.DEMO_RESET_KEY = 'qa-reset-key';
   process.env.CASES_INGEST_KEY = KEY;
-  resetCases();
+  await resetCases();
 });
 afterEach(() => {
   for (const [key, value] of Object.entries(saved)) {
@@ -57,7 +57,7 @@ describe('policy engine agrees with the synthetic case expectations', () => {
     expect(evaluation.band).toBe('compliance');
   });
 
-  it('every uncertain case is at least routed to a human or a plan, never auto-approved', () => {
+  it('every uncertain case is at least routed to a human or a plan, never auto-approved', async () => {
     // identity-name-mismatch: the policy has no identity check, so a caller on someone else's loan can be approved (reported).
     for (const item of VALID_CASES.filter((c) => !c.expect.decisionCertain && c.id !== 'identity-name-mismatch')) {
       const fields = cleanScenarioFields(scenario, { ...item.input });
@@ -66,13 +66,13 @@ describe('policy engine agrees with the synthetic case expectations', () => {
     }
   });
 
-  it('due-date draft uses the new day, not the old one ("from the 1st to the 16th")', () => {
+  it('due-date draft uses the new day, not the old one ("from the 1st to the 16th")', async () => {
     const fields = cleanScenarioFields(scenario, { ...caseById('demo-approve-due-date').input });
     const evaluation = evaluateHardship(loanFor(fields.loanNumber), fields);
     expect(draftReply(fields, evaluation)).toContain('to the 16');
   });
 
-  it('"deceased" is not read as a cease-contact request', () => {
+  it('"deceased" is not read as a cease-contact request', async () => {
     const evaluation = evaluateHardship(loanFor('LAF-20417'), {
       reason: 'My husband is deceased and I need to push this payment back a month.',
       requestedChange: 'Payment extension',
@@ -80,7 +80,7 @@ describe('policy engine agrees with the synthetic case expectations', () => {
     expect(evaluation.decision).toBe('APPROVE_EXTENSION');
   });
 
-  it('every approval and plan draft carries the required disclosures', () => {
+  it('every approval and plan draft carries the required disclosures', async () => {
     for (const item of VALID_CASES) {
       const fields = cleanScenarioFields(scenario, { ...item.input });
       const evaluation = evaluateHardship(loanFor(fields.loanNumber), fields);
@@ -131,14 +131,14 @@ describe('POST /api/cases ingest (QA)', () => {
       const ticketId = `QA-${5000 + index}`;
       const response = await ingest(ingestRequest({ ticketId, scenario: 'lakeline-hardship', fields: cleanScenarioFields(scenario, { ...item.input }) }));
       expect(response.status, item.id).toBe(201);
-      const stored = getCase(ticketId)!;
+      const stored = (await getCase(ticketId))!;
       expect(stored.status).toBe('needs_review');
       expect(stored.request.loanNumber).toBe(item.expect.loanNumber);
       expect(stored.rules.length).toBeGreaterThan(0);
       expect(stored.reasoning.length).toBeGreaterThan(0);
       expect(stored.draft).toContain('Lakeline Auto Finance Customer Care');
     }
-    expect(listCases('lakeline-hardship').length).toBe(11 + VALID_CASES.length);
+    expect((await listCases('lakeline-hardship')).length).toBe(11 + VALID_CASES.length);
   });
 
   it('normalizes a raw loan number on ingest ("laf 20417")', async () => {
@@ -146,41 +146,41 @@ describe('POST /api/cases ingest (QA)', () => {
       ingestRequest({ ticketId: 'QA-6001', scenario: 'lakeline-hardship', request: { ...caseById('demo-approve-extension').input, loanNumber: 'laf 20417' } }),
     );
     expect(response.status).toBe(201);
-    const stored = getCase('QA-6001')!;
+    const stored = (await getCase('QA-6001'))!;
     expect(stored.history.loan?.loanNumber, 'loan record should be found after normalization').toBe('LAF-20417');
   });
 
   it('a live intake ticket id does not collide with a seeded sample case', async () => {
-    const seededIds = listCases('lakeline-hardship').map((item) => item.ticketId);
+    const seededIds = (await listCases('lakeline-hardship')).map((item) => item.ticketId);
     expect(seededIds, 'seeded ids overlap the LAF-REQ-1001.. ids /api/tickets hands out').not.toContain('LAF-REQ-1001');
   });
 });
 
 describe('case actions (QA)', () => {
-  const first = () => listCases('lakeline-hardship')[0].ticketId;
+  const first = async () => (await listCases('lakeline-hardship'))[0].ticketId;
 
   it('send twice is idempotent and never emails', async () => {
-    const id = first();
+    const id = await first();
     const one = await (await act(...actRequest(id, { action: 'send', by: 'QA' }))).json();
     const two = await (await act(...actRequest(id, { action: 'send', by: 'QA' }))).json();
     expect(one).toMatchObject({ ok: true, status: 'sent', idempotent: false, emailed: false });
     expect(two).toMatchObject({ ok: true, status: 'sent', idempotent: true, emailed: false });
-    expect(getCase(id)!.log.filter((entry) => entry.action === 'sent')).toHaveLength(1);
+    expect((await getCase(id))!.log.filter((entry) => entry.action === 'sent')).toHaveLength(1);
   });
 
   it('edit then send stores the edited draft and marks it edited', async () => {
-    const id = first();
+    const id = await first();
     const draft = 'Edited reply. This is a summary of your request. Final terms are confirmed in writing. Lakeline Auto Finance Customer Care 1-800-555-0142';
     const response = await act(...actRequest(id, { action: 'edit_send', by: 'QA', draft }));
     expect(response.status).toBe(200);
-    const stored = getCase(id)!;
+    const stored = (await getCase(id))!;
     expect(stored.status).toBe('edited_sent');
     expect(stored.draft).toBe(draft);
     expect(stored.compliance.verdict).toBe('Edited');
   });
 
   it('rejects an unknown action, missing reviewer, unknown case, and cross-site origin', async () => {
-    const id = first();
+    const id = await first();
     expect((await act(...actRequest(id, { action: 'delete', by: 'QA' }))).status).toBe(400);
     expect((await act(...actRequest(id, { action: 'send' }))).status).toBe(400);
     expect((await act(...actRequest('LAF-REQ-0000', { action: 'send', by: 'QA' }))).status).toBe(404);
@@ -189,26 +189,26 @@ describe('case actions (QA)', () => {
   });
 
   it('a rejected case cannot then be sent', async () => {
-    const id = first();
+    const id = await first();
     await act(...actRequest(id, { action: 'reject', by: 'QA' }));
     await act(...actRequest(id, { action: 'send', by: 'QA' }));
-    expect(getCase(id)!.status, 'send after reject should not flip the case to sent').toBe('rejected');
+    expect((await getCase(id))!.status, 'send after reject should not flip the case to sent').toBe('rejected');
   });
 
   it('an escalated case cannot then be sent', async () => {
-    const id = first();
+    const id = await first();
     await act(...actRequest(id, { action: 'escalate', by: 'QA' }));
     await act(...actRequest(id, { action: 'send', by: 'QA' }));
-    expect(getCase(id)!.status, 'send after escalate should not flip the case to sent').toBe('escalated');
+    expect((await getCase(id))!.status, 'send after escalate should not flip the case to sent').toBe('escalated');
   });
 
   it('reset restores every seeded case and drops ingested ones', async () => {
     await ingest(ingestRequest({ ticketId: 'QA-7001', scenario: 'lakeline-hardship', request: { loanNumber: 'LAF-20417' } }));
-    await act(...actRequest(first(), { action: 'escalate', by: 'QA' }));
-    resetCases();
-    const cases = listCases('lakeline-hardship');
+    await act(...actRequest(await first(), { action: 'escalate', by: 'QA' }));
+    await resetCases();
+    const cases = await listCases('lakeline-hardship');
     expect(cases).toHaveLength(11);
     expect(cases.every((item) => item.status === 'needs_review')).toBe(true);
-    expect(getCase('QA-7001')).toBeUndefined();
+    expect(await getCase('QA-7001')).toBeUndefined();
   });
 });

@@ -53,15 +53,19 @@ export async function resetDemo(api: APIRequestContext, baseURL: string) {
 }
 
 export const test = base.extend<{ echo: Echo }>({
-  echo: async ({ playwright, baseURL }, use) => {
-    const api = await playwright.request.newContext();
-    const echo = new Echo(api);
-    await echo.reset();
-    await resetDemo(api, baseURL!);
-    await use(echo);
-    await echo.reset();
-    await api.dispose();
-  },
+  // Automatic so every test starts from the seeded demo, even when it does not ask for `echo`.
+  echo: [
+    async ({ playwright, baseURL }, use) => {
+      const api = await playwright.request.newContext();
+      const echo = new Echo(api);
+      await echo.reset();
+      await resetDemo(api, baseURL!);
+      await use(echo);
+      await echo.reset();
+      await api.dispose();
+    },
+    { auto: true },
+  ],
 });
 
 export { expect };

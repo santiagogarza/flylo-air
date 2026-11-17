@@ -1,16 +1,12 @@
 import type { APIRequestContext, Page } from '@playwright/test';
 import { test, expect, RESET_KEY } from './fixtures/echo';
-import { fillLakeline, LAKELINE_URL, MAYA, submit } from './fixtures/intake';
+import { fillLakeline, LAKELINE_URL, LIVE_TICKET_ID_PATTERN, MAYA, submit } from './fixtures/intake';
 import { saveMedia } from './fixtures/media';
 import { VALID_CASES } from '../test/fixtures/lakeline-cases';
 
 const QUEUE = '/intake/review?scenario=lakeline-hardship';
 const SEEDED = 11;
 
-// PR 2 keeps cases in module memory that the /api/cases routes and the review pages do not share in a production build,
-// so actions and ingests never reach the UI. Flip to false once the fix lands on cursor/intake-review-queue-e564.
-const SHARED_STATE_BUG = true;
-const knownStateBug = () => test.fail(SHARED_STATE_BUG, 'review pages do not see API-side case state (reported)');
 
 async function ingest(api: APIRequestContext, body: unknown, headers: Record<string, string> = { authorization: `Bearer ${RESET_KEY}` }) {
   return api.post('/api/cases', { data: body, headers });
@@ -47,8 +43,8 @@ test.describe('review queue', () => {
   test('unknown scenario and unknown case are friendly', async ({ page }) => {
     await page.goto('/intake/review?scenario=nope');
     await expect(page.getByRole('heading', { level: 1, name: 'That scenario was not found' })).toBeVisible();
-    await page.goto('/intake/review/LAF-REQ-0000?scenario=lakeline-hardship');
-    await expect(page.getByRole('heading', { level: 1, name: 'Case not found' })).toBeVisible();
+    const missing = await page.goto('/intake/review/LAF-REQ-0000?scenario=lakeline-hardship');
+    expect(missing?.status()).toBe(404);
   });
 });
 
@@ -79,7 +75,6 @@ test.describe('case detail', () => {
   });
 
   test('Send records once; a second Send is a no-op; nothing calls a webhook', async ({ page, echo }) => {
-    knownStateBug();
     await openCase(page, 'Maya Chen');
     await reviewer(page);
     await page.getByRole('button', { name: 'Send', exact: true }).click();
@@ -92,7 +87,6 @@ test.describe('case detail', () => {
   });
 
   test('double-click Send records one action', async ({ page }) => {
-    knownStateBug();
     await openCase(page, 'Daniel Ortiz');
     await reviewer(page);
     await page.getByRole('button', { name: 'Send', exact: true }).dblclick();
@@ -102,7 +96,6 @@ test.describe('case detail', () => {
   });
 
   test('edit the draft, then send it', async ({ page }) => {
-    knownStateBug();
     await openCase(page, 'Priya Raman');
     await reviewer(page);
     const draft = page.getByLabel('Draft reply');
@@ -127,7 +120,6 @@ test.describe('case detail', () => {
   });
 
   test('Escalate and Reject move the case between filters', async ({ page }) => {
-    knownStateBug();
     await openCase(page, 'Jordan Blake');
     await reviewer(page);
     await page.getByRole('button', { name: 'Escalate' }).click();
@@ -143,7 +135,6 @@ test.describe('case detail', () => {
   });
 
   test('reviewer name is remembered for the session', async ({ page }) => {
-    knownStateBug();
     await openCase(page, 'Grace Kim');
     await reviewer(page, 'Santi');
     await page.getByRole('button', { name: 'Request changes' }).click();
@@ -175,7 +166,6 @@ test.describe('POST /api/cases ingest', () => {
   });
 
   test('all valid synthetic cases ingest and appear in the queue', async ({ page, request }, testInfo) => {
-    knownStateBug();
     test.setTimeout(60_000);
     for (const [index, item] of VALID_CASES.entries()) {
       const response = await ingest(request, { ticketId: `QA-${3000 + index}`, scenario: 'lakeline-hardship', channel: item.channel, fields: item.input });
@@ -188,7 +178,6 @@ test.describe('POST /api/cases ingest', () => {
   });
 
   test('markup in an ingested case renders as text', async ({ page, request }) => {
-    knownStateBug();
     let dialogs = 0;
     page.on('dialog', (dialog) => {
       dialogs += 1;
@@ -204,11 +193,10 @@ test.describe('POST /api/cases ingest', () => {
 
 test.describe('reset', () => {
   test('clears tickets and cases together', async ({ page, request, baseURL }) => {
-    knownStateBug();
     await page.goto(LAKELINE_URL);
     await fillLakeline(page, MAYA);
     await submit(page);
-    await expect(page.getByTestId('ticket-id')).toHaveText('LAF-REQ-1001');
+    await expect(page.getByTestId('ticket-id')).toHaveText(LIVE_TICKET_ID_PATTERN);
 
     await ingest(request, { ticketId: 'QA-RESET-1', scenario: 'lakeline-hardship', request: { loanNumber: 'LAF-20417' } });
     await openCase(page, 'Maya Chen');
@@ -224,13 +212,12 @@ test.describe('reset', () => {
     await page.goto(QUEUE);
     await expect(page.locator('.case-list li')).toHaveCount(SEEDED);
     await expect(page.getByRole('link', { name: `Needs review (${SEEDED})` })).toBeVisible();
-    await page.goto('/intake/review/QA-RESET-1?scenario=lakeline-hardship');
-    await expect(page.getByRole('heading', { name: 'Case not found' })).toBeVisible();
+    expect((await page.goto('/intake/review/QA-RESET-1?scenario=lakeline-hardship'))?.status()).toBe(404);
 
     await page.goto(LAKELINE_URL);
     await fillLakeline(page, MAYA);
     await submit(page);
-    await expect(page.getByTestId('ticket-id')).toHaveText('LAF-REQ-1001');
+    await expect(page.getByTestId('ticket-id')).toHaveText(LIVE_TICKET_ID_PATTERN);
   });
 });
 

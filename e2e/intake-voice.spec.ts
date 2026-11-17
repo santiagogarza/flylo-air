@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures/echo';
-import { field, LAKELINE_URL, submit } from './fixtures/intake';
+import { field, LAKELINE_URL, LIVE_TICKET_ID_PATTERN, submit } from './fixtures/intake';
 import { saveMedia } from './fixtures/media';
 import { installFakeVoice, voiceDrop, voiceSetField } from './fixtures/voice';
 
@@ -57,7 +57,7 @@ test.describe('lakeline voice call (mocked socket and mic)', () => {
     await field(page, 'requestedChange').selectOption('Payment extension');
     await field(page, 'callbackWindow').fill('Afternoons');
     await submit(page);
-    await expect(page.getByTestId('ticket-id')).toHaveText('LAF-REQ-1001');
+    await expect(page.getByTestId('ticket-id')).toHaveText(LIVE_TICKET_ID_PATTERN);
     const [hook] = await echo.waitForRequests(1, '/lakeline-hook');
     expect((hook.body as { channel: string }).channel).toBe('voice');
   });

@@ -1,6 +1,9 @@
 import type { Page } from '@playwright/test';
 import type { LakelineInput } from '../../test/fixtures/lakeline-cases';
 
+/** Live ids are sequence-based: a reset does not restart the counter, so tests match the shape, not a number. */
+export const LIVE_TICKET_ID_PATTERN = /^LAF-REQ-\d+$/;
+
 export const LAKELINE_URL = '/intake?scenario=lakeline-hardship';
 
 export const LAKELINE_CATEGORIES = ['Payment extension', 'Due-date change', 'Payment plan', 'Payment portal problem', 'Other'];
