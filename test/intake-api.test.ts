@@ -1,3 +1,4 @@
+import { LAKELINE_PERSONA } from '@/scenarios/lakeline/persona';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { handleCreateTicket, resetTickets } from '@/server/tickets';
 import { context, post } from './helpers';
@@ -102,7 +103,7 @@ describe('POST /api/tickets scenario payloads', () => {
     const fetchImpl = webhook();
     const { LAKELINE_WEBHOOK_URL: _url, LAKELINE_WEBHOOK_KEY: _key, ...fallback } = env;
     const response = await handleCreateTicket(
-      post('/api/tickets', { scenario: 'lakeline-hardship', channel: 'web', fields: { ...lakelineFields, fullName: 'Maya Chen', email: 'maya.chen@example.com', reason: 'I need to push my payment back a few weeks.', callbackWindow: 'Afternoons' } }),
+      post('/api/tickets', { scenario: 'lakeline-hardship', channel: 'web', fields: { ...lakelineFields, fullName: LAKELINE_PERSONA.fullName, email: LAKELINE_PERSONA.email, reason: 'I need to push my payment back a few weeks.', callbackWindow: 'Afternoons' } }),
       context(fallback, fetchImpl as unknown as typeof fetch),
     );
     expect(response.status).toBe(201);

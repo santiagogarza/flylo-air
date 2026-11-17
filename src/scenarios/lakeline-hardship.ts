@@ -1,9 +1,10 @@
+import { LAKELINE_PERSONA } from './lakeline/persona';
 import type { ScenarioConfig } from './types';
 
 export const LAKELINE_GREETING = 'Lakeline Auto Finance customer care. How can I help?';
 
 export const LAKELINE_DEMO_LINE =
-  "Hi, I'm Maya Chen, loan LAF-20417, maya.chen@example.com. I had a medical bill this month and need to push my payment back a few weeks. Afternoons are best to call me.";
+  `Hi, I'm ${LAKELINE_PERSONA.fullName}, loan ${LAKELINE_PERSONA.loanNumber}, ${LAKELINE_PERSONA.email}. I had a medical bill this month and need to push my payment back a few weeks. Afternoons are best to call me.`;
 
 const CATEGORIES = ['Payment extension', 'Due-date change', 'Payment plan', 'Payment portal problem', 'Other'] as const;
 
@@ -69,7 +70,7 @@ export const lakelineHardship: ScenarioConfig = {
       required: true,
       maxLength: 120,
       normalize: 'trim',
-      placeholder: 'Maya Chen',
+      placeholder: LAKELINE_PERSONA.fullName,
       input: { autoComplete: 'name', spellCheck: false },
       messages: { required: 'Enter your full name.', maxLength: 'Use 120 characters or fewer.' },
     },
@@ -97,7 +98,7 @@ export const lakelineHardship: ScenarioConfig = {
       required: true,
       full: true,
       maxLength: 254,
-      placeholder: 'maya.chen@example.com',
+      placeholder: LAKELINE_PERSONA.email,
       normalize: 'email',
       input: { autoComplete: 'email', spellCheck: false, inputMode: 'email' },
       messages: { required: 'Enter an email like name@example.com.', invalid: 'Enter an email like name@example.com.' },
@@ -152,7 +153,7 @@ export const lakelineHardship: ScenarioConfig = {
     greeting: LAKELINE_GREETING,
     demoLine: LAKELINE_DEMO_LINE,
     instructions: lakelineInstructions(),
-    keyterms: ['Lakeline', 'Lakeline Auto Finance', 'Maya Chen', 'LAF-20417', 'maya.chen@example.com'],
+    keyterms: ['Lakeline', 'Lakeline Auto Finance', LAKELINE_PERSONA.fullName, LAKELINE_PERSONA.loanNumber, LAKELINE_PERSONA.email],
     valueDescription:
       'English text the caller actually said. Do not guess. For requestedChange, send one of the requested changes exactly. For reason, send the complete updated English reason, not only the newest detail. For loanNumber, send LAF- and five digits, for example LAF-20417.',
   },

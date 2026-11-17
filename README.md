@@ -159,22 +159,24 @@ Tickets live in memory on each server instance. A cold start also empties them.
   "createdAt": "2026-11-17T12:00:00.000Z",
   "channel": "voice",
   "fields": {
-    "fullName": "Maya Chen",
+    "fullName": "Santi Garza",
     "loanNumber": "LAF-20417",
-    "email": "maya.chen@example.com",
+    "email": "santi.garza@flylo-air.com",
     "reason": "I had a medical bill this month and need to push my payment back a few weeks.",
     "requestedChange": "Payment extension",
     "callbackWindow": "Afternoons"
   },
   "category": "Payment extension",
-  "summary": "Payment extension request from Maya Chen (LAF-20417): I had a medical bill this month and need to push my payment back a few weeks.",
-  "description": "Maya Chen (loan LAF-20417, maya.chen@example.com) requested Payment extension. Reason: I had a medical bill this month and need to push my payment back a few weeks. Best callback window: Afternoons."
+  "summary": "Payment extension request from Santi Garza (LAF-20417): I had a medical bill this month and need to push my payment back a few weeks.",
+  "description": "Santi Garza (loan LAF-20417, santi.garza@flylo-air.com) requested Payment extension. Reason: I had a medical bill this month and need to push my payment back a few weeks. Best callback window: Afternoons."
 }
 ```
 
+The Lakeline demo caller is defined once in `src/scenarios/lakeline/persona.ts` (Santi Garza, loan LAF-20417, `santi.garza@flylo-air.com`). `loans.json` carries the same borrower and email for that loan.
+
 Greeting: *"Lakeline Auto Finance customer care. How can I help?"*
 
-Demo line: *"Hi, I'm Maya Chen, loan LAF-20417, maya.chen@example.com. I had a medical bill this month and need to push my payment back a few weeks. Afternoons are best to call me."*
+Demo line: *"Hi, I'm Santi Garza, loan LAF-20417, santi.garza@flylo-air.com. I had a medical bill this month and need to push my payment back a few weeks. Afternoons are best to call me."*
 
 `/intake/pay?scenario=lakeline-hardship` accepts a loan number and a normal amount and shows a confirmation. It does not charge a card. Callers who say the payment portal failed are talking about this page.
 
@@ -195,9 +197,9 @@ Lakeline cases are evaluated from `hardship-policy.md` and `loans.json`. Other s
   "ticketId": "LAF-REQ-2001",
   "scenario": "lakeline-hardship",
   "request": {
-    "fullName": "Maya Chen",
+    "fullName": "Santi Garza",
     "loanNumber": "LAF-20417",
-    "email": "maya.chen@example.com",
+    "email": "santi.garza@flylo-air.com",
     "reason": "I had a medical bill this month and need to push my payment back a few weeks.",
     "requestedChange": "Payment extension",
     "callbackWindow": "Afternoons"

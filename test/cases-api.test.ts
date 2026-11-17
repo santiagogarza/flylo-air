@@ -1,3 +1,4 @@
+import { LAKELINE_PERSONA } from '@/scenarios/lakeline/persona';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST as ingest } from '@/app/api/cases/route';
 import { POST as act } from '@/app/api/cases/[ticketId]/route';
@@ -28,9 +29,9 @@ function ingestBody(extra: Record<string, unknown> = {}) {
     ticketId: 'LAF-REQ-2001',
     scenario: 'lakeline-hardship',
     request: {
-      fullName: 'Maya Chen',
+      fullName: LAKELINE_PERSONA.fullName,
       loanNumber: 'LAF-20417',
-      email: 'maya.chen@example.com',
+      email: LAKELINE_PERSONA.email,
       reason: 'I had a medical bill this month and need to push my payment back a few weeks.',
       requestedChange: 'Payment extension',
       callbackWindow: 'Afternoons',
@@ -74,11 +75,11 @@ describe('POST /api/cases', () => {
     expect(missing.status).toBe(400);
     expect((await missing.json()).error).toBe('ticketId is required.');
 
-    const loan = await ingest(post('/api/cases', { ticketId: 'LAF-REQ-2003', scenario: 'lakeline-hardship', request: { fullName: 'Maya Chen' } }, { authorization: 'Bearer reset-me' }));
+    const loan = await ingest(post('/api/cases', { ticketId: 'LAF-REQ-2003', scenario: 'lakeline-hardship', request: { fullName: LAKELINE_PERSONA.fullName } }, { authorization: 'Bearer reset-me' }));
     expect(loan.status).toBe(400);
     expect((await loan.json()).error).toBe('request.loanNumber is required.');
 
-    const rules = await ingest(post('/api/cases', { ticketId: 'FLY-SUP-2001', scenario: 'flylo-support', request: { fullName: 'Maya Chen' } }, { authorization: 'Bearer reset-me' }));
+    const rules = await ingest(post('/api/cases', { ticketId: 'FLY-SUP-2001', scenario: 'flylo-support', request: { fullName: LAKELINE_PERSONA.fullName } }, { authorization: 'Bearer reset-me' }));
     expect(rules.status).toBe(400);
     expect((await rules.json()).error).toContain('rules is required');
   });
@@ -99,7 +100,7 @@ describe('case actions', () => {
 
   it('stores an edited draft and then sends it', async () => {
     const response = await act(
-      post('/api/cases/LAF-REQ-9001', { action: 'edit_send', by: 'Avery', draft: 'Updated draft for Maya. This is a summary of your request. Final terms are confirmed in writing. Interest continues to accrue during the deferred period, and your loan term will extend by one month. Lakeline Auto Finance Customer Care 1-800-555-0142' }),
+      post('/api/cases/LAF-REQ-9001', { action: 'edit_send', by: 'Avery', draft: 'Updated draft for Santi. This is a summary of your request. Final terms are confirmed in writing. Interest continues to accrue during the deferred period, and your loan term will extend by one month. Lakeline Auto Finance Customer Care 1-800-555-0142' }),
       { params: Promise.resolve({ ticketId: 'LAF-REQ-9001' }) },
     );
     expect(response.status).toBe(200);
@@ -123,7 +124,7 @@ describe('sample cases and ingest', () => {
     expect(seeded).toHaveLength(11);
     expect(seeded.every((id) => Number(id.slice('LAF-REQ-'.length)) >= 9001)).toBe(true);
     expect(await getCase('LAF-REQ-1001')).toBeUndefined();
-    expect((await getCase('LAF-REQ-9001'))?.request.fullName).toBe('Maya Chen');
+    expect((await getCase('LAF-REQ-9001'))?.request.fullName).toBe(LAKELINE_PERSONA.fullName);
 
     const fetchImpl = vi.fn(async () => new Response('{}', { status: 200 }));
     const ticket = await handleCreateTicket(
@@ -160,7 +161,7 @@ describe('sample cases and ingest', () => {
     expect(created).toMatchObject({ ok: true, ticketId: 'LAF-REQ-1001', status: 'needs_review' });
     expect(created.idempotent).not.toBe(true);
     expect((await getCase('LAF-REQ-1001'))?.request.fullName).toBe('New Caller');
-    expect((await getCase('LAF-REQ-9001'))?.request.fullName).toBe('Maya Chen');
+    expect((await getCase('LAF-REQ-9001'))?.request.fullName).toBe(LAKELINE_PERSONA.fullName);
   });
 
   it('normalizes the loan number before looking it up', async () => {

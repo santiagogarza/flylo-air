@@ -60,7 +60,7 @@ describe('hardship policy', () => {
 
   it('puts the required disclosure sentences in the draft', () => {
     const loan = loans.find((item) => item.demoPath === 'approve_extension');
-    if (!loan) throw new Error('missing Maya');
+    if (!loan) throw new Error('missing Santi');
     const evaluation = evaluateHardship(loan, requestFor(loan));
     const draft = draftReply(requestFor(loan), evaluation);
     expect(checkDisclosures(draft, evaluation.decision).every((item) => item.present)).toBe(true);
@@ -86,7 +86,7 @@ describe('hardship policy', () => {
 
   it('does not treat bereavement as a cease-contact stop', () => {
     const loan = loans.find((item) => item.demoPath === 'approve_extension');
-    if (!loan) throw new Error('missing Maya');
+    if (!loan) throw new Error('missing Santi');
     const evaluation = evaluateHardship(loan, {
       fullName: loan.borrower,
       loanNumber: loan.loanNumber,
