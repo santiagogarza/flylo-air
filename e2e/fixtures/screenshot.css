@@ -1,0 +1,15 @@
+/* Pin one font that ships on every Linux runner so baselines match across machines. */
+*,
+*::before,
+*::after {
+  font-family: 'DejaVu Sans', sans-serif !important;
+  transition: none !important;
+  animation: none !important;
+}
+code,
+kbd,
+pre,
+samp,
+.ref {
+  font-family: 'DejaVu Sans Mono', monospace !important;
+}
