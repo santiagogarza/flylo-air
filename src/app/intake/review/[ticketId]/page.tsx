@@ -27,7 +27,13 @@ export async function generateMetadata({
   if (!scenario) return absoluteTitle(id);
   const meta = scenarioTitle(id, scenario);
   if (await getCase(id)) return meta;
-  return { ...meta, title: { absolute: `Case not found · ${scenario.brandName}` } };
+  const missing = `Case not found · ${scenario.brandName}`;
+  return {
+    ...meta,
+    title: { absolute: missing },
+    openGraph: { ...meta.openGraph, title: missing },
+    twitter: { ...meta.twitter, title: missing },
+  };
 }
 
 export default async function CasePage({
