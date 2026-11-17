@@ -47,10 +47,19 @@ test('support keeps its FlyLo title, description, and header', async ({ page }) 
 test('a missing case page returns HTTP 404 with Lakeline copy', async ({ page }) => {
   const response = await page.goto('/intake/review/LAF-REQ-0000?scenario=lakeline-hardship');
   expect(response?.status()).toBe(404);
-  // notFound() keeps the page generateMetadata title (the ticket id). The friendly copy comes from not-found.tsx.
-  await expectLakelineMeta(page, `LAF-REQ-0000 · ${BRAND}`);
+  await expect(page).toHaveTitle(`Case not found · ${BRAND}`);
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', DESCRIPTION);
+  await expect(page.locator('meta[property="og:description"]')).toHaveAttribute('content', DESCRIPTION);
+  await expect(page.locator('meta[name="twitter:description"]')).toHaveAttribute('content', DESCRIPTION);
   await expect(page.getByRole('heading', { level: 1, name: 'Case not found' })).toBeVisible();
   await expect(page.getByText('No case matches this link. It may have been cleared by a demo reset.')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Back to the queue' })).toBeVisible();
   await expect(page.locator('.intake-bar')).toContainText('Lakeline');
+});
+
+// Known gap: generateMetadata spreads the case-page metadata, so og:title and twitter:title still carry the ticket id after the 404 document title change (91a7464). Expected to fail until the builder aligns them.
+test.fail('a missing case page uses the same title in social tags as in the document title', async ({ page }) => {
+  await page.goto('/intake/review/LAF-REQ-0000?scenario=lakeline-hardship');
+  await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', `Case not found · ${BRAND}`);
+  await expect(page.locator('meta[name="twitter:title"]')).toHaveAttribute('content', `Case not found · ${BRAND}`);
 });
