@@ -46,7 +46,9 @@ All of these are **server-only**. Never prefix them with `NEXT_PUBLIC_`, and nev
 | --- | --- |
 | `XAI_API_KEY` | Minting realtime voice sessions. Without it the call button reports that voice is not configured and the form still works. |
 | `SUPPORT_WEBHOOK_URL` | Where new tickets are POSTed. Also the fallback URL for any scenario whose own URL env var is unset. |
-| `SUPPORT_WEBHOOK_HEADER` | Name of the header that carries the webhook key. Lakeline reuses this name. |
+| `SUPPORT_WEBHOOK_HEADER` | Name of the header that carries the webhook key. Lakeline reuses this name. On the Vercel preview it is `Authorization`. |
+| `BLOB_READ_WRITE_TOKEN` | Optional. Private Vercel Blob store for tickets, the id counter and review cases. Preferred durable store. |
+| `KV_REST_API_URL`, `KV_REST_API_TOKEN` | Optional. Upstash / Vercel KV, used when there is no Blob token. With neither, state is in memory on each server instance. |
 | `SUPPORT_WEBHOOK_KEY` | Value sent in that header. Also the fallback key. |
 | `LAKELINE_WEBHOOK_URL` | Optional. Lakeline tickets POST here when this is set. |
 | `LAKELINE_WEBHOOK_KEY` | Optional. Lakeline sender key. When unset, `SUPPORT_WEBHOOK_KEY` is used. |
@@ -137,6 +139,10 @@ If those are unset, the ticket is sent with `SUPPORT_WEBHOOK_URL`, `SUPPORT_WEBH
 Commented sketches of those three live in `src/scenarios/examples.ts`. Every variant reuses `SUPPORT_WEBHOOK_HEADER`.
 
 Open the form at `/intake?scenario=<id>`. An unknown id shows the list of scenarios. `/support/` stays the FlyLo form.
+
+### Webhook key on the preview
+
+The preview sets `SUPPORT_WEBHOOK_HEADER` to `Authorization`, and `LAKELINE_WEBHOOK_KEY` already includes the word `Bearer ` (the value looks like `Bearer abc…`). The server sends the key exactly as stored, so it never adds a second `Bearer `. Do not put a bare token in that variable unless the header expects a bare token.
 
 ### Reset
 
