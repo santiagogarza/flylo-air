@@ -1,4 +1,5 @@
 import { test, expect } from './fixtures/echo';
+import { LAKELINE_PERSONA } from '@/scenarios/lakeline/persona';
 import { field, LAKELINE_URL, LIVE_TICKET_ID_PATTERN, submit } from './fixtures/intake';
 import { saveMedia } from './fixtures/media';
 import { installFakeVoice, voiceDrop, voiceSetField } from './fixtures/voice';
@@ -37,19 +38,19 @@ test.describe('lakeline voice call (mocked socket and mic)', () => {
     await expect(page.locator('.call-state')).toHaveText('Live. The microphone is on.');
     await expect(page.getByRole('button', { name: 'Hang up' })).toBeVisible();
 
-    await voiceSetField(page, 'fullName', 'Maya Chen');
+    await voiceSetField(page, 'fullName', LAKELINE_PERSONA.fullName);
     await voiceSetField(page, 'loanNumber', 'laf 20417');
-    await voiceSetField(page, 'email', 'Maya.Chen@Example.com');
-    await expect(field(page, 'fullName')).toHaveValue('Maya Chen');
-    await expect(field(page, 'loanNumber')).toHaveValue('LAF-20417');
-    await expect(field(page, 'email')).toHaveValue('maya.chen@example.com');
+    await voiceSetField(page, 'email', 'Santi.Garza@Flylo-Air.com');
+    await expect(field(page, 'fullName')).toHaveValue(LAKELINE_PERSONA.fullName);
+    await expect(field(page, 'loanNumber')).toHaveValue(LAKELINE_PERSONA.loanNumber);
+    await expect(field(page, 'email')).toHaveValue(LAKELINE_PERSONA.email);
     await expect(page.locator('.field.is-filled')).toHaveCount(3);
     await expect(page.locator('.call-needed li')).toHaveText(['Reason', 'Requested change', 'Best callback window']);
     await saveMedia(page, testInfo, 'intake-lakeline-call-live');
 
     await voiceDrop(page);
     await expect(page.locator('.call-state')).toHaveText('The call was interrupted. Use the form.');
-    await expect(field(page, 'fullName')).toHaveValue('Maya Chen');
+    await expect(field(page, 'fullName')).toHaveValue(LAKELINE_PERSONA.fullName);
     await expect(field(page, 'loanNumber')).toHaveValue('LAF-20417');
     await saveMedia(page, testInfo, 'intake-lakeline-call-dropped');
 

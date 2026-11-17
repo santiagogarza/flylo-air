@@ -64,7 +64,7 @@ describe('POST /api/tickets accepts every valid case and rejects every invalid o
   };
 
   it.each(LAKELINE_CASES.map((item) => [item.id, item] as const))('%s', async (_id, item) => {
-    resetTickets();
+    await resetTickets();
     const fetchImpl = vi.fn(async () => new Response('{}', { status: 200 }));
     const response = await handleCreateTicket(
       post('/api/tickets', { scenario: 'lakeline-hardship', channel: item.channel, fields: item.input }),
@@ -76,11 +76,15 @@ describe('POST /api/tickets accepts every valid case and rejects every invalid o
       return;
     }
     expect(response.status).toBe(201);
-    expect(await response.json()).toEqual({ ok: true, id: 'LAF-REQ-1001', status: 'received' });
+    const body = await response.json();
+    expect(body).toMatchObject({ ok: true, status: 'received' });
+    expect(body.id).toMatch(/^LAF-REQ-\d+$/);
+    expect(Number(String(body.id).slice('LAF-REQ-'.length))).toBeLessThan(9001);
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe(env.LAKELINE_WEBHOOK_URL);
     const sent = JSON.parse(String(init.body));
     expect(Object.keys(sent)).toEqual(['scenario', 'id', 'createdAt', 'channel', 'fields', 'category', 'summary', 'description']);
+    expect(sent.id).toBe(body.id);
     expect(sent.channel).toBe(item.channel);
     expect(sent.fields.loanNumber).toBe(item.expect.loanNumber);
     expect(sent.category).toBe(item.input.requestedChange);

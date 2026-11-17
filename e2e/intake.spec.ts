@@ -1,5 +1,6 @@
 import { test, expect } from './fixtures/echo';
-import { field, fillLakeline, LAKELINE_URL, LIVE_TICKET_ID_PATTERN, MAYA, submit } from './fixtures/intake';
+import { LAKELINE_PERSONA } from '@/scenarios/lakeline/persona';
+import { CALLER, field, fillLakeline, LAKELINE_URL, LIVE_TICKET_ID_PATTERN, submit } from './fixtures/intake';
 import { saveMedia } from './fixtures/media';
 
 const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
@@ -54,7 +55,7 @@ test.describe('/intake?scenario=lakeline-hardship', () => {
 
   test('typed fill submits the scenario payload to the Lakeline webhook @mobile', async ({ page, echo }, testInfo) => {
     await page.goto(LAKELINE_URL);
-    await fillLakeline(page, MAYA);
+    await fillLakeline(page, CALLER);
     await field(page, 'callbackWindow').press('Tab');
     await expect(field(page, 'loanNumber')).toHaveValue('LAF-20417');
     await saveMedia(page, testInfo, 'intake-lakeline-filled');
@@ -66,10 +67,10 @@ test.describe('/intake?scenario=lakeline-hardship', () => {
       scenario: 'lakeline-hardship',
       channel: 'web',
       fields: {
-        fullName: 'Maya Chen',
-        loanNumber: 'LAF-20417',
-        email: 'maya.chen@example.com',
-        reason: MAYA.reason,
+        fullName: LAKELINE_PERSONA.fullName,
+        loanNumber: LAKELINE_PERSONA.loanNumber,
+        email: LAKELINE_PERSONA.email,
+        reason: CALLER.reason,
         requestedChange: 'Payment extension',
         callbackWindow: 'Afternoons',
       },
@@ -92,14 +93,14 @@ test.describe('/intake?scenario=lakeline-hardship', () => {
       createdAt: expect.stringMatching(ISO),
       channel: 'web',
       category: 'Payment extension',
-      summary: `Payment extension request from Maya Chen (LAF-20417): ${MAYA.reason}`,
+      summary: `Payment extension request from ${LAKELINE_PERSONA.fullName} (${LAKELINE_PERSONA.loanNumber}): ${CALLER.reason}`,
     });
-    expect(body.description).toContain('Maya Chen (loan LAF-20417, maya.chen@example.com) requested Payment extension.');
+    expect(body.description).toContain(`${LAKELINE_PERSONA.fullName} (loan ${LAKELINE_PERSONA.loanNumber}, ${LAKELINE_PERSONA.email}) requested Payment extension.`);
   });
 
   test('empty submit lists every missing field and sends nothing', async ({ page, echo }, testInfo) => {
     await page.goto(LAKELINE_URL);
-    await field(page, 'fullName').fill('Maya Chen');
+    await field(page, 'fullName').fill(LAKELINE_PERSONA.fullName);
     await field(page, 'loanNumber').fill('LAF-2O417');
     await page.getByRole('button', { name: 'Submit', exact: true }).click();
     const alert = page.locator('.alert-error');
@@ -123,7 +124,7 @@ test.describe('/intake?scenario=lakeline-hardship', () => {
   test('double-click Submit sends exactly one ticket', async ({ page, echo }) => {
     await echo.setMode({ status: 200, delayMs: 1500 });
     await page.goto(LAKELINE_URL);
-    await fillLakeline(page, MAYA);
+    await fillLakeline(page, CALLER);
     await page.waitForTimeout(700);
     await page.getByRole('button', { name: 'Submit', exact: true }).dblclick();
     await expect(page.getByTestId('ticket-id')).toHaveText(LIVE_TICKET_ID_PATTERN);
@@ -134,7 +135,7 @@ test.describe('/intake?scenario=lakeline-hardship', () => {
   test('Enter pressed repeatedly in a field sends exactly one ticket', async ({ page, echo }) => {
     await echo.setMode({ status: 200, delayMs: 1500 });
     await page.goto(LAKELINE_URL);
-    await fillLakeline(page, MAYA);
+    await fillLakeline(page, CALLER);
     await page.waitForTimeout(700);
     const input = field(page, 'callbackWindow');
     await input.press('Enter');
@@ -147,7 +148,7 @@ test.describe('/intake?scenario=lakeline-hardship', () => {
   test('Submit shows a sending state while the webhook is slow', async ({ page, echo }) => {
     await echo.setMode({ status: 200, delayMs: 2000, times: 1 });
     await page.goto(LAKELINE_URL);
-    await fillLakeline(page, MAYA);
+    await fillLakeline(page, CALLER);
     await submit(page);
     await expect(page.getByRole('button', { name: 'Sending…' })).toBeDisabled();
     await expect(page.getByTestId('ticket-id')).toHaveText(LIVE_TICKET_ID_PATTERN);
@@ -157,13 +158,13 @@ test.describe('/intake?scenario=lakeline-hardship', () => {
     test(`webhook ${status} shows a friendly error, keeps the data and allows a retry`, async ({ page, echo }, testInfo) => {
       await echo.setMode({ status, times: 1 });
       await page.goto(LAKELINE_URL);
-      await fillLakeline(page, MAYA);
+      await fillLakeline(page, CALLER);
       await submit(page);
       const alert = page.locator('.alert-error');
       await expect(alert).toContainText('Your request could not be sent right now.');
       await expect(page.locator('div[tabindex="-1"]:has(> .alert-error)')).toBeFocused();
-      await expect(field(page, 'fullName')).toHaveValue('Maya Chen');
-      await expect(field(page, 'reason')).toHaveValue(MAYA.reason);
+      await expect(field(page, 'fullName')).toHaveValue(LAKELINE_PERSONA.fullName);
+      await expect(field(page, 'reason')).toHaveValue(CALLER.reason);
       await expect(field(page, 'requestedChange')).toHaveValue('Payment extension');
       if (status === 500) await saveMedia(page, testInfo, 'intake-lakeline-send-error');
 
@@ -179,17 +180,17 @@ test.describe('/intake?scenario=lakeline-hardship', () => {
     test.setTimeout(45_000);
     await echo.setMode({ status: 200, delayMs: 11_000, times: 1 });
     await page.goto(LAKELINE_URL);
-    await fillLakeline(page, MAYA);
+    await fillLakeline(page, CALLER);
     await submit(page);
     await expect(page.locator('.alert-error')).toContainText('Your request could not be sent right now.', { timeout: 15_000 });
-    await expect(field(page, 'email')).toHaveValue('maya.chen@example.com');
+    await expect(field(page, 'email')).toHaveValue(LAKELINE_PERSONA.email);
     await submit(page);
     await expect(page.getByTestId('ticket-id')).toHaveText(/^LAF-REQ-\d{4}$/);
   });
 
   test('"Start a new request" clears every field', async ({ page }) => {
     await page.goto(LAKELINE_URL);
-    await fillLakeline(page, MAYA);
+    await fillLakeline(page, CALLER);
     await submit(page);
     await page.getByRole('button', { name: 'Start a new request' }).click();
     for (const key of ['fullName', 'loanNumber', 'email', 'reason', 'requestedChange', 'callbackWindow'] as const) {
@@ -202,7 +203,7 @@ test.describe('/intake?scenario=lakeline-hardship', () => {
   test('Spanish and unicode text round-trips unchanged', async ({ page, echo }) => {
     const reason = 'Tuve una factura médica y necesito aplazar el pago — 王小明 dice “gracias”.';
     await page.goto(LAKELINE_URL);
-    await fillLakeline(page, { ...MAYA, fullName: 'María José Núñez', reason, callbackWindow: 'Por las tardes' });
+    await fillLakeline(page, { ...CALLER, fullName: 'María José Núñez', reason, callbackWindow: 'Por las tardes' });
     await submit(page);
     await expect(page.getByTestId('ticket-id')).toHaveText(LIVE_TICKET_ID_PATTERN);
     await expect(page.getByText('Thanks, María.')).toBeVisible();
@@ -214,30 +215,32 @@ test.describe('/intake?scenario=lakeline-hardship', () => {
     });
   });
 
-  test('very long reason is capped at 2,000 characters by the field', async ({ page, echo }) => {
+  test('a reason over 2,000 characters is kept and rejected, not silently cut', async ({ page, echo }) => {
+    const reason = 'x'.repeat(10) + ' word'.repeat(600);
     await page.goto(LAKELINE_URL);
-    await fillLakeline(page, { ...MAYA, reason: 'x'.repeat(10) + ' word'.repeat(600) });
-    expect((await field(page, 'reason').inputValue()).length).toBe(2000);
+    await fillLakeline(page, { ...CALLER, reason });
+    expect((await field(page, 'reason').inputValue()).length).toBe(reason.length);
+    await expect(page.locator('#intake-reason-count')).toContainText('over');
     await submit(page);
-    await expect(page.getByTestId('ticket-id')).toHaveText(LIVE_TICKET_ID_PATTERN);
-    const [hook] = await echo.waitForRequests(1, '/lakeline-hook');
-    expect((hook.body as { fields: { reason: string } }).fields.reason.length).toBe(2000);
+    await expect(page.locator('.alert-error')).toContainText('Use 2,000 characters or fewer.');
+    await expect(field(page, 'reason')).toHaveAttribute('aria-invalid', 'true');
+    expect(await echo.requests()).toHaveLength(0);
   });
 
   test('keyboard only: tab order follows the form and Enter submits', async ({ page, echo }) => {
     await page.goto(LAKELINE_URL);
     await field(page, 'fullName').focus();
-    await page.keyboard.type('Maya Chen');
+    await page.keyboard.type(LAKELINE_PERSONA.fullName);
     await page.keyboard.press('Tab');
     await expect(field(page, 'loanNumber')).toBeFocused();
     await page.keyboard.type('laf20417');
     await page.keyboard.press('Tab');
     await expect(field(page, 'loanNumber')).toHaveValue('LAF-20417');
     await expect(field(page, 'email')).toBeFocused();
-    await page.keyboard.type('maya.chen@example.com');
+    await page.keyboard.type(LAKELINE_PERSONA.email);
     await page.keyboard.press('Tab');
     await expect(field(page, 'reason')).toBeFocused();
-    await page.keyboard.type(MAYA.reason);
+    await page.keyboard.type(CALLER.reason);
     await page.keyboard.press('Tab');
     await expect(field(page, 'requestedChange')).toBeFocused();
     await field(page, 'requestedChange').selectOption('Payment extension');

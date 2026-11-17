@@ -1,3 +1,5 @@
+import { LAKELINE_PERSONA } from '@/scenarios/lakeline/persona';
+
 /**
  * Synthetic Lakeline hardship cases for unit and e2e tests. MOCK DATA ONLY: every name, email and loan is invented.
  *
@@ -95,7 +97,7 @@ export const REQUIRED_EDGE_TAGS: EdgeTag[] = [
 type Borrower = { name: string; email: string; loan: string };
 
 const B = {
-  maya: { name: 'Maya Chen', email: 'maya.chen@example.com', loan: 'LAF-20417' },
+  santi: { name: LAKELINE_PERSONA.fullName, email: LAKELINE_PERSONA.email, loan: LAKELINE_PERSONA.loanNumber },
   daniel: { name: 'Daniel Ortiz', email: 'daniel.ortiz@example.com', loan: 'LAF-20433' },
   priya: { name: 'Priya Raman', email: 'priya.raman@example.com', loan: 'LAF-20458' },
   jordan: { name: 'Jordan Blake', email: 'jordan.blake@example.com', loan: 'LAF-20471' },
@@ -137,11 +139,11 @@ export const LAKELINE_CASES: SyntheticCase[] = [
   // One canonical case per demo path in loans.json.
   {
     id: 'demo-approve-extension',
-    title: 'Maya: medical bill, push payment back (approve extension)',
+    title: 'Santi: medical bill, push payment back (approve extension)',
     tags: ['demo_path'],
     demoPath: 'approve_extension',
     channel: 'voice',
-    input: input(B.maya, EXT, 'I had a medical bill this month and need to push my payment back a few weeks.'),
+    input: input(B.santi, EXT, 'I had a medical bill this month and need to push my payment back a few weeks.'),
     expect: { valid: true, loanNumber: 'LAF-20417', loanStatus: 'open', decision: 'APPROVE_EXTENSION', decisionCertain: true },
   },
   {
@@ -240,7 +242,7 @@ export const LAKELINE_CASES: SyntheticCase[] = [
     tags: ['demo_path', 'unknown_loan'],
     demoPath: 'unknown_loan',
     channel: 'voice',
-    input: input(B.maya, EXT, 'I had a medical bill and need to push my payment back.', { loanNumber: 'LAF-99999' }),
+    input: input(B.santi, EXT, 'I had a medical bill and need to push my payment back.', { loanNumber: 'LAF-99999' }),
     expect: { valid: true, loanNumber: 'LAF-99999', loanStatus: 'not_found', decision: 'ESCALATE', decisionCertain: true, complianceStop: 'not_found' },
   },
 
@@ -262,7 +264,7 @@ export const LAKELINE_CASES: SyntheticCase[] = [
       tags: ['loan_normalization'],
       demoPath: 'approve_extension',
       channel: 'web',
-      input: input(B.maya, EXT, 'I had a medical bill this month and need to push my payment back a few weeks.', { loanNumber: raw }),
+      input: input(B.santi, EXT, 'I had a medical bill this month and need to push my payment back a few weeks.', { loanNumber: raw }),
       expect: { valid: true, loanNumber: 'LAF-20417', loanStatus: 'open', decision: 'APPROVE_EXTENSION', decisionCertain: true },
     }),
   ),
@@ -281,7 +283,7 @@ export const LAKELINE_CASES: SyntheticCase[] = [
     title: 'Loan with four digits',
     tags: ['garbled_field'],
     channel: 'web',
-    input: input(B.maya, EXT, 'I need to push my payment back a few weeks.', { loanNumber: 'LAF-2041' }),
+    input: input(B.santi, EXT, 'I need to push my payment back a few weeks.', { loanNumber: 'LAF-2041' }),
     expect: { valid: false, invalidFields: ['loanNumber'] },
   },
   {
@@ -289,7 +291,7 @@ export const LAKELINE_CASES: SyntheticCase[] = [
     title: 'Loan with the letter O for zero',
     tags: ['garbled_field'],
     channel: 'voice',
-    input: input(B.maya, EXT, 'I need to push my payment back a few weeks.', { loanNumber: 'LAF-2O417' }),
+    input: input(B.santi, EXT, 'I need to push my payment back a few weeks.', { loanNumber: 'LAF-2O417' }),
     expect: { valid: false, invalidFields: ['loanNumber'] },
   },
   {
@@ -297,7 +299,7 @@ export const LAKELINE_CASES: SyntheticCase[] = [
     title: 'Loan without the LAF prefix',
     tags: ['garbled_field'],
     channel: 'web',
-    input: input(B.maya, EXT, 'I need to push my payment back a few weeks.', { loanNumber: '20417' }),
+    input: input(B.santi, EXT, 'I need to push my payment back a few weeks.', { loanNumber: '20417' }),
     expect: { valid: false, invalidFields: ['loanNumber'] },
   },
   {
@@ -313,15 +315,15 @@ export const LAKELINE_CASES: SyntheticCase[] = [
     title: 'Email cut off by the transcription',
     tags: ['garbled_field'],
     channel: 'voice',
-    input: input(B.maya, EXT, 'I need to push my payment back a few weeks.', { email: 'maya.chen@' }),
+    input: input(B.santi, EXT, 'I need to push my payment back a few weeks.', { email: 'santi.garza@' }),
     expect: { valid: false, invalidFields: ['email'] },
   },
   {
     id: 'garbled-email-spoken',
-    title: 'Email spoken as words ("maya dot chen at example")',
+    title: 'Email spoken as words ("santi dot garza at flylo-air")',
     tags: ['garbled_field', 'voice_channel'],
     channel: 'voice',
-    input: input(B.maya, EXT, 'I need to push my payment back a few weeks.', { email: 'maya dot chen at example' }),
+    input: input(B.santi, EXT, 'I need to push my payment back a few weeks.', { email: 'santi dot garza at flylo-air' }),
     expect: { valid: false, invalidFields: ['email'] },
   },
   {
@@ -329,7 +331,7 @@ export const LAKELINE_CASES: SyntheticCase[] = [
     title: 'Requested change typed as free text',
     tags: ['garbled_field'],
     channel: 'web',
-    input: input(B.maya, 'skip a month pls', 'I need to push my payment back a few weeks.'),
+    input: input(B.santi, 'skip a month pls', 'I need to push my payment back a few weeks.'),
     expect: { valid: false, invalidFields: ['requestedChange'] },
   },
   {
@@ -337,7 +339,7 @@ export const LAKELINE_CASES: SyntheticCase[] = [
     title: 'Name left blank',
     tags: ['missing_field'],
     channel: 'web',
-    input: input(B.maya, EXT, 'I need to push my payment back a few weeks.', { fullName: '   ' }),
+    input: input(B.santi, EXT, 'I need to push my payment back a few weeks.', { fullName: '   ' }),
     expect: { valid: false, invalidFields: ['fullName'] },
   },
   {
@@ -345,7 +347,7 @@ export const LAKELINE_CASES: SyntheticCase[] = [
     title: 'Reason too short ("help")',
     tags: ['missing_field'],
     channel: 'web',
-    input: input(B.maya, EXT, 'help'),
+    input: input(B.santi, EXT, 'help'),
     expect: { valid: false, invalidFields: ['reason'] },
   },
   {
@@ -387,7 +389,7 @@ export const LAKELINE_CASES: SyntheticCase[] = [
     title: 'Name over 120 characters',
     tags: ['long_text', 'garbled_field'],
     channel: 'web',
-    input: input(B.maya, EXT, 'I need to push my payment back a few weeks.', { fullName: 'Maya '.repeat(30).trim() }),
+    input: input(B.santi, EXT, 'I need to push my payment back a few weeks.', { fullName: 'Santi '.repeat(30).trim() }),
     expect: { valid: false, invalidFields: ['fullName'] },
   },
 
@@ -397,7 +399,7 @@ export const LAKELINE_CASES: SyntheticCase[] = [
     title: 'Spanish reason on an approvable loan',
     tags: ['spanish', 'unicode'],
     channel: 'voice',
-    input: input(B.maya, EXT, 'Tuve una factura médica este mes y necesito aplazar mi pago unas semanas.', {
+    input: input(B.santi, EXT, 'Tuve una factura médica este mes y necesito aplazar mi pago unas semanas.', {
       fullName: 'María José Núñez',
       callbackWindow: 'Por las tardes',
     }),
@@ -424,17 +426,17 @@ export const LAKELINE_CASES: SyntheticCase[] = [
     title: 'Upper-case email with stray spaces normalizes',
     tags: ['unicode', 'garbled_field'],
     channel: 'voice',
-    input: input(B.maya, EXT, 'Necesito aplazar el pago — medical bill this month.', { email: '  MAYA.CHEN @ EXAMPLE.COM ' }),
+    input: input(B.santi, EXT, 'Necesito aplazar el pago — medical bill this month.', { email: '  SANTI.GARZA @ FLYLO-AIR.COM ' }),
     expect: { valid: true, loanNumber: 'LAF-20417', loanStatus: 'open', decision: 'APPROVE_EXTENSION', decisionCertain: true },
   },
 
   // Caller's words trigger a compliance stop on a loan that would otherwise pass.
   {
-    id: 'words-bankruptcy-on-maya',
-    title: 'Maya mentions filing for bankruptcy',
+    id: 'words-bankruptcy-on-santi',
+    title: 'Santi mentions filing for bankruptcy',
     tags: ['compliance_words', 'policy_crosscheck'],
     channel: 'voice',
-    input: input(B.maya, EXT, 'My lawyer says I should file for bankruptcy next month, but for now I need to push this payment back.'),
+    input: input(B.santi, EXT, 'My lawyer says I should file for bankruptcy next month, but for now I need to push this payment back.'),
     expect: { valid: true, loanNumber: 'LAF-20417', loanStatus: 'open', decision: 'ESCALATE', decisionCertain: true, complianceStop: 'bankruptcy' },
   },
   {
@@ -456,11 +458,11 @@ export const LAKELINE_CASES: SyntheticCase[] = [
 
   // Policy cross-checks: the requested change differs from the loan's demo path.
   {
-    id: 'cross-maya-due-date',
-    title: 'Maya asks for a due-date change (12 DPD, 28 on-time)',
+    id: 'cross-santi-due-date',
+    title: 'Santi asks for a due-date change (12 DPD, 28 on-time)',
     tags: ['policy_crosscheck'],
     channel: 'web',
-    input: input(B.maya, DUE, 'My pay schedule changed. Can my due date move from the 5th to the 20th?'),
+    input: input(B.santi, DUE, 'My pay schedule changed. Can my due date move from the 5th to the 20th?'),
     expect: { valid: true, loanNumber: 'LAF-20417', loanStatus: 'open', decision: 'APPROVE_DUE_DATE_CHANGE', decisionCertain: true },
   },
   {
@@ -497,10 +499,10 @@ export const LAKELINE_CASES: SyntheticCase[] = [
   },
   {
     id: 'cross-other-category',
-    title: 'Maya picks "Other" for a vague request',
+    title: 'Santi picks "Other" for a vague request',
     tags: ['policy_crosscheck'],
     channel: 'web',
-    input: input(B.maya, OTHER, 'I am not sure what I need, money is just tight this month and I wanted to talk to someone.'),
+    input: input(B.santi, OTHER, 'I am not sure what I need, money is just tight this month and I wanted to talk to someone.'),
     expect: { valid: true, loanNumber: 'LAF-20417', loanStatus: 'open', decision: 'ESCALATE', decisionCertain: false },
   },
   {
@@ -513,10 +515,10 @@ export const LAKELINE_CASES: SyntheticCase[] = [
   },
   {
     id: 'identity-name-mismatch',
-    title: "Someone else's name on Maya's loan",
+    title: "Someone else's name on Santi's loan",
     tags: ['identity_mismatch'],
     channel: 'voice',
-    input: input(B.maya, EXT, 'I am calling for my sister, she had a medical bill and needs to push her payment back.', {
+    input: input(B.santi, EXT, 'I am calling for my sister, she had a medical bill and needs to push her payment back.', {
       fullName: 'Lena Chen',
       email: 'lena.chen@example.com',
     }),
@@ -529,7 +531,7 @@ export const LAKELINE_CASES: SyntheticCase[] = [
     title: 'Reason contains a <script> tag',
     tags: ['markup_in_text'],
     channel: 'web',
-    input: input(B.maya, EXT, '<script>alert("x")</script> I had a medical bill and need to push my payment back.'),
+    input: input(B.santi, EXT, '<script>alert("x")</script> I had a medical bill and need to push my payment back.'),
     expect: { valid: true, loanNumber: 'LAF-20417', loanStatus: 'open', decision: 'APPROVE_EXTENSION', decisionCertain: true },
   },
   {

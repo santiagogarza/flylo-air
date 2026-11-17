@@ -2,15 +2,8 @@ import { test, expect } from './fixtures/echo';
 import { field, fillLakeline, LAKELINE_URL, LIVE_TICKET_ID_PATTERN, submit } from './fixtures/intake';
 import { LAKELINE_CASES, type LakelineInput } from '../test/fixtures/lakeline-cases';
 
-const MAX_LENGTH: Partial<Record<keyof LakelineInput, number>> = { fullName: 120, loanNumber: 40, email: 254, reason: 2000, callbackWindow: 120 };
-
-// The inputs carry maxlength, so a too-long value is cut to the limit in the browser instead of being rejected.
 function uiInvalidFields(item: (typeof LAKELINE_CASES)[number]): string[] {
-  return (item.expect.invalidFields ?? []).filter((key) => {
-    const max = MAX_LENGTH[key];
-    const raw = item.input[key].trim();
-    return !(max && raw.length > max);
-  });
+  return item.expect.invalidFields ?? [];
 }
 
 test.describe('every synthetic Lakeline case through the intake form', () => {

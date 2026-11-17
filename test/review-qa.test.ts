@@ -36,25 +36,15 @@ function actRequest(ticketId: string, body: unknown) {
   return [post(`/api/cases/${ticketId}`, body), { params: Promise.resolve({ ticketId }) }] as const;
 }
 
-// "That record is wrong" disputes a payment record without the word "dispute", so the engine escalates it outside compliance.
-const KNOWN_POLICY_GAPS = new Set(['words-dispute-on-hannah']);
-
 describe('policy engine agrees with the synthetic case expectations', () => {
   const certain = VALID_CASES.filter((item) => item.expect.decisionCertain && item.expect.decision !== 'ROUTE_PORTAL_BUG');
 
-  it.each(certain.filter((item) => !KNOWN_POLICY_GAPS.has(item.id)).map((item) => [item.id, item] as const))('%s', (_id, item) => {
+  it.each(certain.map((item) => [item.id, item] as const))('%s', (_id, item) => {
     const fields = cleanScenarioFields(scenario, { ...item.input });
     const evaluation = evaluateHardship(loanFor(fields.loanNumber), fields);
     expect(evaluation.decision).toBe(item.expect.decision);
     if (item.expect.complianceStop) expect(evaluation.band).toBe('compliance');
     else expect(evaluation.band).not.toBe('compliance');
-  });
-
-  it.fails.each([...KNOWN_POLICY_GAPS].map((id) => [id] as const))('known gap: %s', (id) => {
-    const item = caseById(id);
-    const fields = cleanScenarioFields(scenario, { ...item.input });
-    const evaluation = evaluateHardship(loanFor(fields.loanNumber), fields);
-    expect(evaluation.band).toBe('compliance');
   });
 
   it('every uncertain case is at least routed to a human or a plan, never auto-approved', async () => {

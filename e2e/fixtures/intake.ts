@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test';
+import { LAKELINE_PERSONA } from '@/scenarios/lakeline/persona';
 import type { LakelineInput } from '../../test/fixtures/lakeline-cases';
 
 /** Live ids are sequence-based: a reset does not restart the counter, so tests match the shape, not a number. */
@@ -29,10 +30,11 @@ export async function submit(page: Page) {
   await page.getByRole('button', { name: 'Submit', exact: true }).first().click();
 }
 
-export const MAYA: LakelineInput = {
-  fullName: 'Maya Chen',
-  loanNumber: 'laf 20417',
-  email: ' Maya.Chen@Example.com ',
+/** Lakeline demo caller. The email is mixed-case with spaces so tests check normalization. */
+export const CALLER: LakelineInput = {
+  fullName: LAKELINE_PERSONA.fullName,
+  loanNumber: `laf ${LAKELINE_PERSONA.loanNumber.slice('LAF-'.length)}`,
+  email: ' Santi.Garza@Flylo-Air.com ',
   reason: 'I had a medical bill this month and need to push my payment back a few weeks.',
   requestedChange: 'Payment extension',
   callbackWindow: 'Afternoons',

@@ -1,6 +1,7 @@
 import type { APIRequestContext, Page } from '@playwright/test';
 import { test, expect, RESET_KEY } from './fixtures/echo';
-import { fillLakeline, LAKELINE_URL, LIVE_TICKET_ID_PATTERN, MAYA, submit } from './fixtures/intake';
+import { LAKELINE_PERSONA } from '@/scenarios/lakeline/persona';
+import { CALLER, fillLakeline, LAKELINE_URL, LIVE_TICKET_ID_PATTERN, submit } from './fixtures/intake';
 import { saveMedia } from './fixtures/media';
 import { VALID_CASES } from '../test/fixtures/lakeline-cases';
 
@@ -29,8 +30,11 @@ test.describe('review queue', () => {
     await expect(page.locator('.case-list li')).toHaveCount(SEEDED);
     await expect(page.getByRole('link', { name: `All (${SEEDED})` })).toBeVisible();
     await expect(page.getByRole('link', { name: `Needs review (${SEEDED})` })).toBeVisible();
-    await expect(page.locator('.case-list li').first()).toContainText('ESCALATE');
-    await expect(page.locator('.case-list li').last()).toContainText(/APPROVE_/);
+    await expect(page.locator('.case-list li').first()).toContainText('Escalate');
+    await expect(page.locator('.case-list li').last()).toContainText(/Approve/);
+    const santi = page.locator('.case-list a', { hasText: LAKELINE_PERSONA.fullName });
+    await expect(santi.locator('.case-outputs')).toContainText('5');
+    await expect(santi.locator('.case-outputs')).toContainText('outputs');
     await saveMedia(page, testInfo, 'review-queue');
   });
 
@@ -45,13 +49,25 @@ test.describe('review queue', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'That scenario was not found' })).toBeVisible();
     const missing = await page.goto('/intake/review/LAF-REQ-0000?scenario=lakeline-hardship');
     expect(missing?.status()).toBe(404);
+    await expect(page.getByRole('heading', { level: 1, name: 'Case not found' })).toBeVisible();
+    await expect(page.getByText('No case matches this link. It may have been cleared by a demo reset.')).toBeVisible();
   });
 });
 
+const OUTPUTS = [
+  'Extension agreement drafted in Google Docs',
+  'Logged to Servicing Ledger',
+  'Loan record updated',
+  'Reply drafted in Gmail, not sent',
+  'Callback held on calendar (Afternoons)',
+];
+
 test.describe('case detail', () => {
   test('Why panel cites passing policy rules and links into the policy @mobile', async ({ page }, testInfo) => {
-    await openCase(page, 'Maya Chen');
-    await expect(page.locator('.page-head .eyebrow')).toHaveText('APPROVE_EXTENSION');
+    await openCase(page, LAKELINE_PERSONA.fullName);
+    await expect(page.locator('.page-head .eyebrow')).toHaveText('Case review');
+    await expect(page.locator('.decision-code code')).toHaveText('APPROVE_EXTENSION');
+    await expect(page.locator('.page-head .badge')).toHaveText('Approve extension');
     const why = page.locator('.rule');
     await expect(why.first()).toContainText('Policy §1 Compliance stops');
     await expect(why.first()).toContainText('Pass');
@@ -66,23 +82,46 @@ test.describe('case detail', () => {
     await expect(page.locator('#s2')).toBeVisible();
   });
 
+  test('Outputs checklist and the bot timeline stay in pipeline order @mobile', async ({ page }, testInfo) => {
+    await page.goto('/intake/review/LAF-REQ-9001?scenario=lakeline-hardship');
+    const outputs = page.locator('.outputs-card');
+    await expect(outputs.getByRole('heading', { name: 'Outputs' })).toBeVisible();
+    await expect(outputs.locator('.outputs-count')).toHaveText('5');
+    await expect(outputs.locator('.output-label')).toHaveText(OUTPUTS);
+    await expect(outputs.locator('.output-label').first()).toHaveAttribute('href', /^https:\/\/mock\.lakeline\.example\//);
+
+    await expect(page.locator('.bot-pipeline li')).toHaveText(['Intake', 'Servicing', 'Compliance', 'Escalation']);
+    for (const bot of ['Intake', 'Servicing', 'Compliance']) {
+      await expect(page.locator('.bot-group', { has: page.getByRole('heading', { name: bot }) }).locator('.timeline-action').first()).toBeVisible();
+    }
+    await expect(page.locator('.bot-group', { has: page.getByRole('heading', { name: 'Escalation' }) })).toContainText('No escalation step.');
+    await saveMedia(page, testInfo, 'review-case-outputs');
+
+    await page.goto('/intake/review/LAF-REQ-9006?scenario=lakeline-hardship');
+    await expect(page.locator('.bot-pipeline li')).toHaveText(['Intake', 'Servicing', 'Compliance', 'Escalation']);
+    await expect(page.locator('.bot-group', { has: page.getByRole('heading', { name: 'Escalation' }) })).toContainText('Flagged for');
+  });
+
   test('compliance case shows the stop and a Compliance handoff', async ({ page }) => {
     await openCase(page, 'Kevin Walsh');
-    await expect(page.locator('.page-head .eyebrow')).toHaveText('ESCALATE');
+    await expect(page.locator('.page-head .badge')).toHaveText('Escalate');
+    await expect(page.locator('.decision-code code')).toHaveText('ESCALATE');
     await expect(page.locator('.rule').first()).toContainText('Fail');
     await expect(page.getByRole('heading', { name: 'Escalation handoff' })).toBeVisible();
     await expect(page.locator('section', { has: page.getByRole('heading', { name: 'Escalation handoff' }) })).toContainText('Compliance');
   });
 
   test('Send records once; a second Send is a no-op; nothing calls a webhook', async ({ page, echo }) => {
-    await openCase(page, 'Maya Chen');
+    await openCase(page, LAKELINE_PERSONA.fullName);
     await reviewer(page);
     await page.getByRole('button', { name: 'Send', exact: true }).click();
     await expect(page.getByRole('status').filter({ hasText: 'Nothing was emailed.' })).toHaveText('Recorded in the demo queue. Nothing was emailed.');
     await expect(page.getByText('Current status: sent')).toBeVisible();
     await page.getByRole('button', { name: 'Send', exact: true }).click();
     await expect(page.getByRole('status').filter({ hasText: 'Nothing was emailed.' })).toHaveText('Already recorded. Nothing was emailed.');
-    await expect(page.locator('li', { hasText: '· sent · QA Reviewer' })).toHaveCount(1);
+    const log = page.getByRole('region', { name: 'Review log' });
+    await expect(log.locator('.timeline-action')).toHaveText('sent');
+    await expect(log).toContainText('QA Reviewer');
     expect(await echo.requests()).toHaveLength(0);
   });
 
@@ -92,7 +131,9 @@ test.describe('case detail', () => {
     await page.getByRole('button', { name: 'Send', exact: true }).dblclick();
     await expect(page.getByText('Current status: sent')).toBeVisible();
     await page.reload();
-    await expect(page.locator('li', { hasText: '· sent · QA Reviewer' })).toHaveCount(1);
+    const log = page.getByRole('region', { name: 'Review log' });
+    await expect(log.locator('.timeline-action')).toHaveText('sent');
+    await expect(log).toContainText('QA Reviewer');
   });
 
   test('edit the draft, then send it', async ({ page }) => {
@@ -159,7 +200,7 @@ test.describe('POST /api/cases ingest', () => {
   test('the reset-key header also works when no ingest key is set', async ({ request }) => {
     const response = await ingest(
       request,
-      { ticketId: 'QA-HDR-1', scenario: 'lakeline-hardship', request: { loanNumber: 'LAF-20417', fullName: 'Maya Chen', requestedChange: 'Payment extension', reason: 'Medical bill.' } },
+      { ticketId: 'QA-HDR-1', scenario: 'lakeline-hardship', request: { loanNumber: LAKELINE_PERSONA.loanNumber, fullName: LAKELINE_PERSONA.fullName, requestedChange: 'Payment extension', reason: 'Medical bill.' } },
       { 'x-demo-reset-key': RESET_KEY },
     );
     expect(response.status()).toBe(201);
@@ -184,7 +225,7 @@ test.describe('POST /api/cases ingest', () => {
       void dialog.dismiss();
     });
     const reason = '<img src=x onerror=alert(1)> <script>alert(2)</script> please help';
-    await ingest(request, { ticketId: 'QA-XSS-1', scenario: 'lakeline-hardship', fields: { ...MAYA, loanNumber: 'LAF-20417', reason } });
+    await ingest(request, { ticketId: 'QA-XSS-1', scenario: 'lakeline-hardship', fields: { ...CALLER, loanNumber: 'LAF-20417', reason } });
     await page.goto('/intake/review/QA-XSS-1?scenario=lakeline-hardship');
     await expect(page.getByText(reason)).toBeVisible();
     expect(dialogs).toBe(0);
@@ -194,12 +235,12 @@ test.describe('POST /api/cases ingest', () => {
 test.describe('reset', () => {
   test('clears tickets and cases together', async ({ page, request, baseURL }) => {
     await page.goto(LAKELINE_URL);
-    await fillLakeline(page, MAYA);
+    await fillLakeline(page, CALLER);
     await submit(page);
     await expect(page.getByTestId('ticket-id')).toHaveText(LIVE_TICKET_ID_PATTERN);
 
     await ingest(request, { ticketId: 'QA-RESET-1', scenario: 'lakeline-hardship', request: { loanNumber: 'LAF-20417' } });
-    await openCase(page, 'Maya Chen');
+    await openCase(page, LAKELINE_PERSONA.fullName);
     await reviewer(page);
     await page.getByRole('button', { name: 'Send', exact: true }).click();
     await expect(page.getByText('Current status: sent')).toBeVisible();
@@ -213,9 +254,10 @@ test.describe('reset', () => {
     await expect(page.locator('.case-list li')).toHaveCount(SEEDED);
     await expect(page.getByRole('link', { name: `Needs review (${SEEDED})` })).toBeVisible();
     expect((await page.goto('/intake/review/QA-RESET-1?scenario=lakeline-hardship'))?.status()).toBe(404);
+    await expect(page.getByRole('heading', { name: 'Case not found' })).toBeVisible();
 
     await page.goto(LAKELINE_URL);
-    await fillLakeline(page, MAYA);
+    await fillLakeline(page, CALLER);
     await submit(page);
     await expect(page.getByTestId('ticket-id')).toHaveText(LIVE_TICKET_ID_PATTERN);
   });
