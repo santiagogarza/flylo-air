@@ -16,7 +16,7 @@ export function IntakeBrandBar({ scenario, current }: { scenario: ScenarioConfig
   return (
     <div className="intake-bar">
       <div className="wrap intake-bar-inner">
-        <Link href={`/intake?scenario=${scenario.id}`} className="intake-wordmark" aria-label={`${scenario.brandName} home`}>
+        <Link href={`/intake?scenario=${scenario.id}`} className="intake-wordmark">
           <span className="intake-mark" aria-hidden="true">
             {first.charAt(0)}
           </span>
