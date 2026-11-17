@@ -3,10 +3,9 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { CheckIcon, LockIcon } from '@/components/icons';
+import { formatPaymentAmount, paymentAmountError } from '@/lib/pay-amount';
 import { getScenario } from '@/scenarios';
 import { interpretFieldInput } from '@/scenarios/validate';
-
-const AMOUNT_MAX = 100_000;
 
 export function PayForm({ scenarioId }: { scenarioId: string }) {
   const scenario = getScenario(scenarioId);
@@ -58,7 +57,7 @@ export function PayForm({ scenarioId }: { scenarioId: string }) {
   const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const interpreted = interpretFieldInput(loanField, loan, scenario.categories);
-    const amountError = amountErrorFor(amount);
+    const amountError = paymentAmountError(amount);
     const next = {
       loan: interpreted.error || !interpreted.value ? interpreted.error || loanField.messages?.required : undefined,
       amount: amountError,
@@ -66,7 +65,7 @@ export function PayForm({ scenarioId }: { scenarioId: string }) {
     setLoan(interpreted.value || loan);
     setErrors(next);
     if (next.loan || next.amount || !interpreted.value) return;
-    setReceipt({ loan: interpreted.value, amount: formatAmount(amount) });
+    setReceipt({ loan: interpreted.value, amount: formatPaymentAmount(amount) });
   };
 
   return (
@@ -144,17 +143,3 @@ export function PayForm({ scenarioId }: { scenarioId: string }) {
   );
 }
 
-function amountErrorFor(raw: string): string | undefined {
-  const cleaned = raw.trim().replace(/[$,]/g, '');
-  if (!cleaned) return 'Enter an amount like 412.18.';
-  if (!/^\d+(\.\d{1,2})?$/.test(cleaned)) return 'Enter a dollar amount with up to two decimals.';
-  const value = Number(cleaned);
-  if (!Number.isFinite(value) || value <= 0) return 'Enter an amount greater than zero.';
-  if (value > AMOUNT_MAX) return 'Enter an amount of $100,000 or less.';
-  return undefined;
-}
-
-function formatAmount(raw: string): string {
-  const value = Number(raw.trim().replace(/[$,]/g, ''));
-  return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-}
