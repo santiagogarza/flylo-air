@@ -202,7 +202,12 @@ function complianceRule(loan: LoanRecord | null, text: string): PolicyRule {
     flagOrWords('Not active-duty and no SCRA flag', flags, ['active_duty_military'], text, ['active duty', 'scra', 'military'], 'Active-duty or SCRA protection is flagged or mentioned.'),
     flagOrWords('No bankruptcy', flags, ['bankruptcy_filed'], text, ['bankruptcy', 'bankrupt'], 'Bankruptcy is flagged or mentioned.'),
     wordsClear('Caller does not dispute the debt, a fee, or a payment', text, ['dispute'], 'The caller disputes the debt, a fee, or a payment.'),
-    wordsClear('Caller does not ask us to stop contact', text, ['stop calling', 'stop contact', 'cease', 'do not call', "don't call", 'do not contact', "don't contact"], 'The caller asked us to stop contact.'),
+    wordsClear(
+      'Caller does not ask us to stop contact',
+      text,
+      ['stop calling', 'stop contact', 'cease', 'do not call', "don't call", 'do not contact', "don't contact", 'dejen de llamarme', 'deje de llamarme', 'no me llamen', 'no me llame'],
+      'The caller asked us to stop contact.',
+    ),
     accountOpen(loan),
   ];
   const failed = criteria.filter((item) => item.result === 'fail');
@@ -336,7 +341,7 @@ function flagOrWords(label: string, flags: string[], flagNames: string[], text: 
 }
 
 function wordsClear(label: string, text: string, phrases: string[], failDetail: string): RuleCriterion {
-  const said = mentions(text, phrases);
+  const said = label.startsWith('Caller does not ask us to stop') ? mentionsPhrase(text, phrases) : mentions(text, phrases);
   return { label, result: said ? 'fail' : 'pass', detail: said ? failDetail : 'Not mentioned.' };
 }
 
@@ -348,13 +353,28 @@ function accountOpen(loan: LoanRecord | null): RuleCriterion {
 
 function requestedDueDay(request: HardshipRequest): number | undefined {
   if (typeof request.requestedDueDay === 'number' && request.requestedDueDay >= 1 && request.requestedDueDay <= 28) return request.requestedDueDay;
-  const match = /(?:due (?:date|day)[^.0-9]{0,40})(\d{1,2})(?:st|nd|rd|th)?/i.exec(request.reason ?? '');
+  const reason = request.reason ?? '';
+  const destinations = [...reason.matchAll(/\bto\s+(?:the\s+)?(\d{1,2})(?:st|nd|rd|th)?\b/gi)];
+  const destination = destinations.at(-1);
+  if (destination) return dayInRange(Number(destination[1]));
+  const match = /(?:due (?:date|day)[^.0-9]{0,40})(\d{1,2})(?:st|nd|rd|th)?/i.exec(reason);
   if (!match) return undefined;
-  const day = Number(match[1]);
+  return dayInRange(Number(match[1]));
+}
+
+function dayInRange(day: number): number | undefined {
   return day >= 1 && day <= 28 ? day : undefined;
 }
 
 function mentions(text: string, phrases: string[]): boolean {
   const hay = text.toLowerCase();
   return phrases.some((phrase) => hay.includes(phrase));
+}
+
+function mentionsPhrase(text: string, phrases: string[]): boolean {
+  const hay = text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+  return phrases.some((phrase) => {
+    const needle = phrase.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(`(?:^|[^a-z0-9])${needle}(?=$|[^a-z0-9])`).test(hay);
+  });
 }

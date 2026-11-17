@@ -10,6 +10,7 @@ import {
   type PolicyRule,
   type PriorityBand,
 } from '@/lib/hardship-policy';
+import { normalizeLoanNumber } from '@/scenarios/normalizers';
 import { asString } from './http';
 
 export type CaseStatus = 'needs_review' | 'sent' | 'edited_sent' | 'escalated' | 'rejected' | 'changes_requested';
@@ -98,6 +99,11 @@ export function applyCaseAction(
   const by = (input.by ?? '').trim();
   if (!by) return { status: 400, body: { ok: false, error: 'by is required. It is the reviewer name written on the log.' } };
 
+  if ((action === 'send' || action === 'edit_send') && (item.status === 'rejected' || item.status === 'escalated')) {
+    const label = item.status === 'rejected' ? 'rejected' : 'escalated';
+    return { status: 409, body: { ok: false, error: `This case is ${label} and cannot be sent.`, status: item.status, emailed: false } };
+  }
+
   if (action === 'send') return mark(item, 'sent', by, ['sent', 'edited_sent']);
   if (action === 'edit_send') {
     const draft = (input.draft ?? '').trim();
@@ -137,7 +143,7 @@ function seedCases(): ReviewCase[] {
     const evaluation = evaluateHardship(toRecord(loan), request);
     const draft = draftReply(request, evaluation);
     return {
-      ticketId: `LAF-REQ-${1001 + index}`,
+      ticketId: `LAF-REQ-${9001 + index}`,
       scenario: 'lakeline-hardship',
       request,
       history: { loan: toRecord(loan), priorTickets: [] },
@@ -273,7 +279,7 @@ function requestFrom(raw: Record<string, unknown>): HardshipRequest {
   const due = raw.requestedDueDay;
   return {
     fullName: asString(raw.fullName),
-    loanNumber: asString(raw.loanNumber).trim(),
+    loanNumber: normalizeLoanNumber(asString(raw.loanNumber)),
     email: asString(raw.email),
     reason: asString(raw.reason),
     requestedChange: asString(raw.requestedChange),

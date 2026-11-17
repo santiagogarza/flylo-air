@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST as ingest } from '@/app/api/cases/route';
 import { POST as act } from '@/app/api/cases/[ticketId]/route';
-import { getCase, resetCases } from '@/server/cases';
+import { getCase, listCases, resetCases } from '@/server/cases';
 import { handleReset } from '@/server/reset';
+import { handleCreateTicket, resetTickets } from '@/server/tickets';
 import { context, post } from './helpers';
 
 const keys = ['DEMO_RESET_KEY', 'CASES_INGEST_KEY'] as const;
@@ -86,42 +87,139 @@ describe('POST /api/cases', () => {
 describe('case actions', () => {
   it('sends once, ignores a second send, and never calls fetch', async () => {
     const spy = vi.spyOn(globalThis, 'fetch');
-    const first = await act(post('/api/cases/LAF-REQ-1001', { action: 'send', by: 'Avery' }), { params: Promise.resolve({ ticketId: 'LAF-REQ-1001' }) });
+    const first = await act(post('/api/cases/LAF-REQ-9001', { action: 'send', by: 'Avery' }), { params: Promise.resolve({ ticketId: 'LAF-REQ-9001' }) });
     expect(first.status).toBe(200);
     expect(await first.json()).toMatchObject({ ok: true, status: 'sent', idempotent: false, emailed: false });
-    const second = await act(post('/api/cases/LAF-REQ-1001', { action: 'send', by: 'Avery' }), { params: Promise.resolve({ ticketId: 'LAF-REQ-1001' }) });
+    const second = await act(post('/api/cases/LAF-REQ-9001', { action: 'send', by: 'Avery' }), { params: Promise.resolve({ ticketId: 'LAF-REQ-9001' }) });
     expect(await second.json()).toMatchObject({ status: 'sent', idempotent: true, emailed: false });
-    expect(getCase('LAF-REQ-1001')?.log.filter((entry) => entry.action === 'sent')).toHaveLength(1);
+    expect(getCase('LAF-REQ-9001')?.log.filter((entry) => entry.action === 'sent')).toHaveLength(1);
     expect(spy).not.toHaveBeenCalled();
     spy.mockRestore();
   });
 
   it('stores an edited draft and then sends it', async () => {
     const response = await act(
-      post('/api/cases/LAF-REQ-1001', { action: 'edit_send', by: 'Avery', draft: 'Updated draft for Maya. This is a summary of your request. Final terms are confirmed in writing. Interest continues to accrue during the deferred period, and your loan term will extend by one month. Lakeline Auto Finance Customer Care 1-800-555-0142' }),
-      { params: Promise.resolve({ ticketId: 'LAF-REQ-1001' }) },
+      post('/api/cases/LAF-REQ-9001', { action: 'edit_send', by: 'Avery', draft: 'Updated draft for Maya. This is a summary of your request. Final terms are confirmed in writing. Interest continues to accrue during the deferred period, and your loan term will extend by one month. Lakeline Auto Finance Customer Care 1-800-555-0142' }),
+      { params: Promise.resolve({ ticketId: 'LAF-REQ-9001' }) },
     );
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({ status: 'edited_sent', emailed: false });
-    const stored = getCase('LAF-REQ-1001');
+    const stored = getCase('LAF-REQ-9001');
     expect(stored?.draft.startsWith('Updated draft')).toBe(true);
     expect(stored?.compliance.verdict).toBe('Edited');
   });
 
   it('asks for a reviewer name', async () => {
-    const response = await act(post('/api/cases/LAF-REQ-1001', { action: 'send', by: '  ' }), { params: Promise.resolve({ ticketId: 'LAF-REQ-1001' }) });
+    const response = await act(post('/api/cases/LAF-REQ-9001', { action: 'send', by: '  ' }), { params: Promise.resolve({ ticketId: 'LAF-REQ-9001' }) });
     expect(response.status).toBe(400);
     expect((await response.json()).error).toContain('by is required');
   });
 });
 
+describe('sample cases and ingest', () => {
+  it('keeps LAF-REQ-1001 free for a live intake ticket', async () => {
+    resetTickets();
+    const seeded = listCases('lakeline-hardship').map((item) => item.ticketId);
+    expect(seeded).toHaveLength(11);
+    expect(seeded.every((id) => Number(id.slice('LAF-REQ-'.length)) >= 9001)).toBe(true);
+    expect(getCase('LAF-REQ-1001')).toBeUndefined();
+    expect(getCase('LAF-REQ-9001')?.request.fullName).toBe('Maya Chen');
+
+    const fetchImpl = vi.fn(async () => new Response('{}', { status: 200 }));
+    const ticket = await handleCreateTicket(
+      post('/api/tickets', {
+        scenario: 'lakeline-hardship',
+        channel: 'web',
+        fields: {
+          fullName: 'New Caller',
+          loanNumber: 'LAF-20417',
+          email: 'new.caller@example.com',
+          reason: 'I need a payment extension this month.',
+          requestedChange: 'Payment extension',
+          callbackWindow: 'Afternoons',
+        },
+      }),
+      context(
+        {
+          SUPPORT_WEBHOOK_URL: 'https://hooks.example.test/support',
+          SUPPORT_WEBHOOK_HEADER: 'x-flylo-key',
+          SUPPORT_WEBHOOK_KEY: 'support-key',
+          LAKELINE_WEBHOOK_URL: 'https://hooks.example.test/lakeline',
+          LAKELINE_WEBHOOK_KEY: 'lake-key',
+        },
+        fetchImpl as unknown as typeof fetch,
+      ),
+    );
+    expect(await ticket.json()).toMatchObject({ ok: true, id: 'LAF-REQ-1001' });
+
+    const ingested = await ingest(
+      post('/api/cases', ingestBody({ ticketId: 'LAF-REQ-1001', request: { ...ingestBody().request, fullName: 'New Caller' } }), { authorization: 'Bearer reset-me' }),
+    );
+    expect(ingested.status).toBe(201);
+    const created = await ingested.json();
+    expect(created).toMatchObject({ ok: true, ticketId: 'LAF-REQ-1001', status: 'needs_review' });
+    expect(created.idempotent).not.toBe(true);
+    expect(getCase('LAF-REQ-1001')?.request.fullName).toBe('New Caller');
+    expect(getCase('LAF-REQ-9001')?.request.fullName).toBe('Maya Chen');
+  });
+
+  it('normalizes the loan number before looking it up', async () => {
+    const response = await ingest(
+      post(
+        '/api/cases',
+        ingestBody({ ticketId: 'LAF-REQ-2010', request: { ...ingestBody().request, loanNumber: 'laf 20417' } }),
+        { authorization: 'Bearer reset-me' },
+      ),
+    );
+    expect(response.status).toBe(201);
+    const stored = getCase('LAF-REQ-2010');
+    expect(stored?.request.loanNumber).toBe('LAF-20417');
+    expect(stored?.history.loan?.loanNumber).toBe('LAF-20417');
+    expect(stored?.decision).toBe('APPROVE_EXTENSION');
+  });
+});
+
+describe('closed cases', () => {
+  it('does not let Send reopen a rejected or escalated case', async () => {
+    const rejected = await act(post('/api/cases/LAF-REQ-9001', { action: 'reject', by: 'Avery' }), { params: Promise.resolve({ ticketId: 'LAF-REQ-9001' }) });
+    expect(rejected.status).toBe(200);
+    const sendRejected = await act(post('/api/cases/LAF-REQ-9001', { action: 'send', by: 'Avery' }), { params: Promise.resolve({ ticketId: 'LAF-REQ-9001' }) });
+    expect(sendRejected.status).toBe(409);
+    expect(await sendRejected.json()).toMatchObject({ ok: false, status: 'rejected', emailed: false });
+    expect(getCase('LAF-REQ-9001')?.status).toBe('rejected');
+
+    const escalated = await act(post('/api/cases/LAF-REQ-9002', { action: 'escalate', by: 'Avery' }), { params: Promise.resolve({ ticketId: 'LAF-REQ-9002' }) });
+    expect(escalated.status).toBe(200);
+    const sendEscalated = await act(
+      post('/api/cases/LAF-REQ-9002', { action: 'edit_send', by: 'Avery', draft: 'A new draft that must not be stored.' }),
+      { params: Promise.resolve({ ticketId: 'LAF-REQ-9002' }) },
+    );
+    expect(sendEscalated.status).toBe(409);
+    expect(getCase('LAF-REQ-9002')?.status).toBe('escalated');
+    expect(getCase('LAF-REQ-9002')?.draft.startsWith('A new draft')).toBe(false);
+  });
+
+  it('still sends a case that needs review or has requested changes', async () => {
+    const open = await act(post('/api/cases/LAF-REQ-9001', { action: 'send', by: 'Avery' }), { params: Promise.resolve({ ticketId: 'LAF-REQ-9001' }) });
+    expect(await open.json()).toMatchObject({ status: 'sent', emailed: false });
+
+    await act(post('/api/cases/LAF-REQ-9002', { action: 'request_changes', by: 'Avery' }), { params: Promise.resolve({ ticketId: 'LAF-REQ-9002' }) });
+    const edited = await act(
+      post('/api/cases/LAF-REQ-9002', { action: 'edit_send', by: 'Avery', draft: 'Updated after changes. This is a summary of your request. Final terms are confirmed in writing. We can move the due date to the 15. Lakeline Auto Finance Customer Care 1-800-555-0142' }),
+      { params: Promise.resolve({ ticketId: 'LAF-REQ-9002' }) },
+    );
+    expect(edited.status).toBe(200);
+    expect(await edited.json()).toMatchObject({ status: 'edited_sent', emailed: false });
+  });
+});
+
 describe('reset', () => {
   it('clears reviewer actions and reloads the sample cases', async () => {
-    await act(post('/api/cases/LAF-REQ-1001', { action: 'reject', by: 'Avery' }), { params: Promise.resolve({ ticketId: 'LAF-REQ-1001' }) });
-    expect(getCase('LAF-REQ-1001')?.status).toBe('rejected');
+    await act(post('/api/cases/LAF-REQ-9001', { action: 'reject', by: 'Avery' }), { params: Promise.resolve({ ticketId: 'LAF-REQ-9001' }) });
+    expect(getCase('LAF-REQ-9001')?.status).toBe('rejected');
     const response = await handleReset(post('/api/reset', {}, { 'x-demo-reset-key': 'reset-me' }), context({ DEMO_RESET_KEY: 'reset-me' }));
     const body = await response.json();
     expect(body).toMatchObject({ ok: true, casesCleared: 11 });
-    expect(getCase('LAF-REQ-1001')?.status).toBe('needs_review');
+    expect(getCase('LAF-REQ-9001')?.status).toBe('needs_review');
   });
 });

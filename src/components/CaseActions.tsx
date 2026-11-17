@@ -20,6 +20,7 @@ export function CaseActions({ ticketId, draft, status }: { ticketId: string; dra
   }, [draft]);
 
   const dirty = text.trim() !== draft.trim();
+  const closed = status === 'rejected' || status === 'escalated';
 
   async function act(action: string) {
     if (pending) return;
@@ -59,9 +60,10 @@ export function CaseActions({ ticketId, draft, status }: { ticketId: string; dra
         <textarea id="case-draft" rows={8} value={text} onChange={(event) => setText(event.target.value)} />
       </div>
       <p className="hint">Current status: {status.replaceAll('_', ' ')}</p>
+      {closed && <p className="hint">This case is closed. Send will not reopen it.</p>}
       {message && <p role="status">{message}</p>}
       <div className="inline-actions" style={{ justifyContent: 'flex-start' }}>
-        <button type="button" className="btn" disabled={pending} onClick={() => act(dirty ? 'edit_send' : 'send')}>
+        <button type="button" className="btn" disabled={pending || closed} onClick={() => act(dirty ? 'edit_send' : 'send')}>
           {dirty ? 'Edit & send' : 'Send'}
         </button>
         <button type="button" className="btn btn-ghost" disabled={pending} onClick={() => act('escalate')}>

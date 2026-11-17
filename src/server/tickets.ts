@@ -11,6 +11,8 @@ import { resolveWebhook, type WebhookTarget } from '@/scenarios/webhook';
 import { asString, isAllowedOrigin, json, readJson, type ServerContext } from './http';
 
 export const FIRST_TICKET_NUMBER = 1001;
+/** Sample review cases start here. Live tickets stay below this number. */
+export const RESERVED_TICKET_NUMBER = 9001;
 export const WEBHOOK_TIMEOUT_MS = 10_000;
 export const LEGACY_PREFIX = 'FLY-SUP-';
 
@@ -42,6 +44,9 @@ export function ticketCount(): number {
 
 function allocateId(prefix: string): string {
   const next = state.nextByPrefix.get(prefix) ?? FIRST_TICKET_NUMBER;
+  if (next >= RESERVED_TICKET_NUMBER) {
+    throw new Error(`Live ${prefix} tickets stop before ${RESERVED_TICKET_NUMBER}.`);
+  }
   state.nextByPrefix.set(prefix, next + 1);
   return `${prefix}${next}`;
 }

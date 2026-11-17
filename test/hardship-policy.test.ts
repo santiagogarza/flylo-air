@@ -67,6 +67,50 @@ describe('hardship policy', () => {
     expect(checkDisclosures('Thanks.', 'APPROVE_EXTENSION').some((item) => !item.present)).toBe(true);
   });
 
+  it('uses the destination due day, not the day being left behind', () => {
+    const loan = loans.find((item) => item.demoPath === 'approve_due_date_change');
+    if (!loan) throw new Error('missing Daniel');
+    for (const [reason, day] of [
+      ['Please move my due date from the 1st to the 16th.', 16],
+      ['Please move my due date to the 20th.', 20],
+    ] as const) {
+      const request = { fullName: loan.borrower, loanNumber: loan.loanNumber, requestedChange: 'Due-date change', reason };
+      const evaluation = evaluateHardship(loan, request);
+      expect(evaluation.decision, reason).toBe('APPROVE_DUE_DATE_CHANGE');
+      expect(evaluation.rules.find((rule) => rule.id === 's3')?.criteria.find((item) => item.label.startsWith('New due day'))?.detail).toContain(String(day));
+      const draft = draftReply(request, evaluation);
+      expect(draft, reason).toContain(`to the ${day}`);
+      expect(draft, reason).not.toMatch(/to the 1(?!\d)/);
+    }
+  });
+
+  it('does not treat bereavement as a cease-contact stop', () => {
+    const loan = loans.find((item) => item.demoPath === 'approve_extension');
+    if (!loan) throw new Error('missing Maya');
+    const evaluation = evaluateHardship(loan, {
+      fullName: loan.borrower,
+      loanNumber: loan.loanNumber,
+      requestedChange: 'Payment extension',
+      reason: 'My spouse is deceased and I need to push the payment back.',
+    });
+    expect(evaluation.decision).toBe('APPROVE_EXTENSION');
+    expect(evaluation.band).toBe('approval');
+  });
+
+  it('treats Spanish stop-contact as a compliance escalation', () => {
+    const loan = loans.find((item) => item.demoPath === 'payment_plan_extension_limit');
+    if (!loan) throw new Error('missing Priya');
+    const evaluation = evaluateHardship(loan, {
+      fullName: loan.borrower,
+      loanNumber: loan.loanNumber,
+      requestedChange: 'Payment extension',
+      reason: 'Necesito mover el pago. Por favor dejen de llamarme.',
+    });
+    expect(evaluation.decision).toBe('ESCALATE');
+    expect(evaluation.band).toBe('compliance');
+    expect(evaluation.rules.map((rule) => rule.id)).toEqual(['s1']);
+  });
+
   it('numbers policy sections so Why links can target them', () => {
     const markdown = readFileSync(new URL('../src/scenarios/lakeline/hardship-policy.md', import.meta.url), 'utf8');
     const headings = parsePolicy(markdown).filter((block) => block.type === 'heading');
