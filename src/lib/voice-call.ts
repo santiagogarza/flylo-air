@@ -1,8 +1,13 @@
+import { defaultVoiceInstructions, GREETING, KEYTERMS } from './voice-instructions';
+
+export const MIC_DENIED_MESSAGE = 'The microphone is blocked. Allow it in the browser, or use the form.';
+export const MIC_UNAVAILABLE_MESSAGE = 'The microphone could not be opened. Use the form.';
+export const CALL_DROPPED_MESSAGE = 'The call was interrupted. Use the form.';
+
 const MODEL = 'grok-voice-latest';
 const SAMPLE_RATE = 24000;
 
-export const GREETING = 'FlyLo-Air support. How can I help?';
-export const KEYTERMS = ['FlyLo', 'FlyLo-Air', 'Maya Chen', 'FLY-48213', 'maya.chen@example.com'];
+export { GREETING, KEYTERMS };
 
 export type CallState = 'idle' | 'connecting' | 'live' | 'ended' | 'denied' | 'error';
 
@@ -12,6 +17,8 @@ export type VoiceField = {
   required: boolean;
   get: () => string;
   set: (value: string) => boolean;
+  /** Spoken to the agent when set() rejects a value. Omit to keep the default sentence. */
+  rejectHint?: string;
 };
 
 export type TranscriptLine = {
@@ -25,6 +32,9 @@ export type VoiceCallOptions = {
   greeting: string;
   fields: VoiceField[];
   categories: readonly string[];
+  instructions?: string;
+  keyterms?: readonly string[];
+  valueDescription?: string;
   onState: (state: CallState, message: string) => void;
   onTranscript: (lines: TranscriptLine[]) => void;
   onFieldSet: (name: string) => void;
@@ -112,9 +122,9 @@ export function createVoiceCall(options: VoiceCallOptions): VoiceCall {
     } catch (error) {
       const name = error instanceof DOMException ? error.name : '';
       if (name === 'NotAllowedError' || name === 'SecurityError') {
-        hangUp('denied', 'The microphone is blocked. Allow it in the browser, or use the form.');
+        hangUp('denied', MIC_DENIED_MESSAGE);
       } else {
-        hangUp('error', 'The microphone could not be opened. Use the form.');
+        hangUp('error', MIC_UNAVAILABLE_MESSAGE);
       }
       return;
     }
@@ -143,12 +153,12 @@ export function createVoiceCall(options: VoiceCallOptions): VoiceCall {
     socket = ws;
     ws.addEventListener('error', () => {
       if (socket === ws && (state === 'connecting' || state === 'live')) {
-        hangUp('error', 'The call was interrupted. Use the form.');
+        hangUp('error', CALL_DROPPED_MESSAGE);
       }
     });
     ws.addEventListener('close', () => {
       if (socket === ws && (state === 'connecting' || state === 'live')) {
-        hangUp('error', 'The call was interrupted. Use the form.');
+        hangUp('error', CALL_DROPPED_MESSAGE);
       }
     });
     ws.addEventListener('message', (event) => {
@@ -162,7 +172,16 @@ export function createVoiceCall(options: VoiceCallOptions): VoiceCall {
       onEvent(ws, context, message);
     });
     ws.addEventListener('open', () => {
-      ws.send(JSON.stringify({ type: 'session.update', session: sessionConfig(options.fields, options.categories) }));
+      ws.send(
+        JSON.stringify({
+          type: 'session.update',
+          session: sessionConfig(options.fields, options.categories, {
+            instructions: options.instructions,
+            keyterms: options.keyterms,
+            valueDescription: options.valueDescription,
+          }),
+        }),
+      );
     });
 
     waitFor(ws, 'session.updated')
@@ -224,7 +243,7 @@ export function createVoiceCall(options: VoiceCallOptions): VoiceCall {
       ws.send(JSON.stringify({ type: 'response.create' }));
     }
     if (type === 'error' && (state === 'live' || state === 'connecting')) {
-      hangUp('error', 'The call was interrupted. Use the form.');
+      hangUp('error', CALL_DROPPED_MESSAGE);
     }
   }
 
@@ -241,7 +260,7 @@ export function createVoiceCall(options: VoiceCallOptions): VoiceCall {
       return { ok: false, error: 'Unknown or empty field.', stillNeeded: missingNames() };
     }
     if (!field.set(value)) {
-      return { ok: false, error: `That value does not fit ${field.label}.`, stillNeeded: missingNames() };
+      return { ok: false, error: field.rejectHint || `That value does not fit ${field.label}.`, stillNeeded: missingNames() };
     }
     options.onFieldSet(field.name);
     return { ok: true, name: field.name, value: field.get(), stillNeeded: missingNames() };
@@ -272,31 +291,22 @@ export function createVoiceCall(options: VoiceCallOptions): VoiceCall {
   return { start, hangUp, getState: current };
 }
 
-export function sessionConfig(fields: Pick<VoiceField, 'name' | 'label'>[], categories: readonly string[]) {
+export function sessionConfig(
+  fields: Pick<VoiceField, 'name' | 'label'>[],
+  categories: readonly string[],
+  voice?: { instructions?: string; keyterms?: readonly string[]; valueDescription?: string },
+) {
   const names = fields.map((field) => field.name);
   return {
     voice: 'eve',
-    instructions: [
-      'You are a customer support agent at FlyLo-Air, an airline. Keep every reply to one or two short, warm sentences. When fields are missing, ask for all of them in one short question, and do not list what you already have.',
-      'Never mention software vendors, models, or that you are automated.',
-      'Reply in the language the caller is using right now. If they switch languages, switch with them for those sentences, then follow them back.',
-      'Write every form field in English. Translate before you save a field.',
-      'Record only what the caller actually said. Never guess a name, booking reference, or email. Leave unknown fields empty.',
-      'As soon as you know one field, call set_field for that field. Do not wait until the end.',
-      'Description is cumulative. Whenever the caller adds a detail about the problem, call set_field for description again with the full English description so far, keeping every earlier detail.',
-      'Booking references are the letters FLY, a hyphen, and five digits, for example FLY-48213. Save them in that form.',
-      'Save email addresses in lowercase with no spaces. Write a spoken "at" as @ and a spoken "dot" as a period.',
-      `Fields: ${fields.map((field) => field.label).join(', ')}.`,
-      `Issue categories: ${categories.join(', ')}. When the problem clearly belongs to one category, for example a payment that fails at checkout is Checkout / payment, set category without asking. Only ask when it is unclear.`,
-      'When the required fields are filled, do not read them back. In one or two short sentences, say the form is filled in, ask the caller to check it and press Submit, and say FlyLo-Air support will email them an update. You cannot submit the form.',
-    ].join(' '),
+    instructions: voice?.instructions ?? defaultVoiceInstructions(fields, categories),
     turn_detection: { type: 'server_vad' },
     audio: {
       input: {
         format: { type: 'audio/pcm', rate: SAMPLE_RATE },
         transcription: {
           model: 'grok-transcribe',
-          keyterms: KEYTERMS,
+          keyterms: voice?.keyterms ? [...voice.keyterms] : KEYTERMS,
         },
       },
       output: { format: { type: 'audio/pcm', rate: SAMPLE_RATE } },
@@ -313,6 +323,7 @@ export function sessionConfig(fields: Pick<VoiceField, 'name' | 'label'>[], cate
             value: {
               type: 'string',
               description:
+                voice?.valueDescription ??
                 'English text. Do not send a guess. For category, send one of the issue categories exactly. For description, send the complete updated English description, not only the newest detail.',
             },
           },

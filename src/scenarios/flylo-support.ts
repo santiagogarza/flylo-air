@@ -1,0 +1,135 @@
+import { ISSUE_CATEGORIES, TICKET_FIELDS, normalizeEmail } from '@/lib/support';
+import { GREETING, KEYTERMS, defaultVoiceInstructions } from '@/lib/voice-instructions';
+import type { ScenarioConfig } from './types';
+
+const fields = TICKET_FIELDS.map((field) => field);
+
+export const FLYLO_DEMO_LINE =
+  "Hi, I'm Maya Chen, booking FLY-48213, maya.chen@example.com. I'm trying to book a flight for me and my son and checkout keeps failing at payment.";
+
+export const flyloSupport: ScenarioConfig = {
+  id: 'flylo-support',
+  title: 'Call FlyLo-Air Support',
+  brandName: 'FlyLo-Air',
+  brandColor: '#1d4ed8',
+  brandNavy: '#0b2545',
+  tagline: "Booking trouble, refunds, changes or bags: talk to us right here, and we'll fill in the ticket while you talk.",
+  pageEyebrow: 'Help center',
+  legacyPayload: true,
+  ticketPrefix: 'FLY-SUP-',
+  categories: ISSUE_CATEGORIES,
+  categoryKey: 'category',
+  summaryKey: 'description',
+  referenceKey: 'bookingReference',
+  fields: [
+    {
+      key: 'fullName',
+      label: fields[0].label,
+      type: 'text',
+      required: true,
+      maxLength: 120,
+      normalize: 'trim',
+      input: { autoComplete: 'off', spellCheck: false },
+      messages: {
+        required: 'Enter your full name.',
+        maxLength: 'Use 120 characters or fewer.',
+      },
+    },
+    {
+      key: 'bookingReference',
+      label: 'Booking reference',
+      type: 'text',
+      required: true,
+      maxLength: 20,
+      hint: 'Like FLY-48213. It is on your confirmation email.',
+      example: 'FLY-48213',
+      pattern: '^FLY-\\d{5}$',
+      normalize: 'booking',
+      input: { autoComplete: 'off', spellCheck: false, autoCapitalize: 'characters' },
+      messages: { pattern: 'Enter a booking reference like FLY-48213.' },
+    },
+    {
+      key: 'email',
+      label: 'Email',
+      type: 'email',
+      required: true,
+      full: true,
+      maxLength: 254,
+      normalize: 'email',
+      input: { autoComplete: 'off', spellCheck: false, inputMode: 'email' },
+      messages: { invalid: 'Enter an email like name@example.com.' },
+    },
+    {
+      key: 'category',
+      label: 'Issue category',
+      type: 'select',
+      required: true,
+      full: true,
+      emptyOption: 'Select a category',
+      messages: { required: 'Choose an issue category.', invalid: 'Choose an issue category.' },
+    },
+    {
+      key: 'description',
+      label: 'Description',
+      type: 'textarea',
+      required: true,
+      full: true,
+      rows: 5,
+      minLength: 10,
+      maxLength: 2000,
+      normalize: 'trim',
+      messages: {
+        required: 'Describe the problem in a sentence or two.',
+        minLength: 'Describe the problem in a sentence or two.',
+        maxLength: 'Use 2,000 characters or fewer.',
+      },
+    },
+  ],
+  voice: {
+    title: 'FlyLo-Air Support',
+    greeting: GREETING,
+    demoLine: FLYLO_DEMO_LINE,
+    instructions: defaultVoiceInstructions(TICKET_FIELDS, ISSUE_CATEGORIES),
+    keyterms: KEYTERMS,
+  },
+  ui: {
+    formTitle: 'Tell us what happened',
+    formIntro:
+      'Call support in this browser, or type your request. The form fills in while you talk. Unknown details stay blank and you can correct any field. Nothing is sent until you press Submit.',
+    howEyebrow: 'How it works',
+    howTitle: 'Talk, check, submit',
+    steps: [
+      'Press Call and allow the microphone.',
+      'Say your name, booking reference, email and what went wrong.',
+      'Watch the form fill in, fix anything, then press Submit.',
+    ],
+    callEyebrow: 'Call FlyLo-Air Support',
+    requiredNote: 'All fields are required.',
+    transcriptEmpty: 'The conversation shows up here.',
+    allFilled: 'All required fields are filled. Check them, then press Submit.',
+    callLabel: 'Call FlyLo-Air Support',
+    hangUpLabel: 'Hang up',
+    submitLabel: 'Submit',
+    sendingLabel: 'Sending…',
+    callAgainLabel: 'Call again',
+    inCallNote: 'Press Esc to hang up.',
+    idleNote: 'Nothing is sent until you press Submit.',
+    sendErrorTitle: 'Your ticket could not be sent right now.',
+    sendErrorBody: 'Check your connection and press Submit again.',
+    invalidTitle: 'Check the highlighted fields, then press Submit again.',
+    successEyebrow: 'Support request',
+    successTitle: 'Ticket received',
+    successHint: 'Quote this number if you contact us again.',
+    restartLabel: 'Start a new request',
+    filledTag: 'Filled from call',
+    formId: 'support-form',
+    titleId: 'support-form-title',
+    fieldIdPrefix: 'support',
+    receivedId: 'ticket-received',
+    showDemoLine: false,
+    successMessage: (values) => {
+      const first = values.fullName.trim().split(' ')[0] || 'there';
+      return `Thanks, ${first}. FlyLo-Air support will email ${normalizeEmail(values.email)} with an update.`;
+    },
+  },
+};
