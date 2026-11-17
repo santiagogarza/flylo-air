@@ -14,6 +14,10 @@ const serverEnv: Record<string, string> = {
   XAI_API_KEY: '',
   LAKELINE_WEBHOOK_URL: `${echoURL}/lakeline-hook`,
   LAKELINE_WEBHOOK_KEY: 'e2e-lakeline-key',
+  // Force the in-memory case store; tests must never reach Vercel Blob or KV.
+  BLOB_READ_WRITE_TOKEN: '',
+  KV_REST_API_URL: '',
+  KV_REST_API_TOKEN: '',
   NEXT_TELEMETRY_DISABLED: '1',
 };
 
