@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { CaseActions } from '@/components/CaseActions';
 import { CaseOutputs, CaseTimeline } from '@/components/CaseWork';
 import { IntakeBrandBar } from '@/components/IntakeBrandBar';
@@ -23,7 +24,7 @@ export async function generateMetadata({
   const requested = param(await searchParams, 'scenario')?.trim() ?? '';
   if (requested && !getScenario(requested)) return absoluteTitle('Case not found');
   const scenario = getScenario(requested || 'lakeline-hardship');
-  return scenario ? scenarioTitle(id, scenario.brandName) : absoluteTitle(id);
+  return scenario ? scenarioTitle(id, scenario) : absoluteTitle(id);
 }
 
 export default async function CasePage({
@@ -37,28 +38,7 @@ export default async function CasePage({
   const scenarioId = param(await searchParams, 'scenario')?.trim() ?? 'lakeline-hardship';
   const scenario = getScenario(scenarioId);
   const item = await getCase(decodeURIComponent(ticketId));
-  if (!item || !scenario) {
-    const fallback = scenario ?? getScenario('lakeline-hardship');
-    return (
-      <div className="intake-theme" style={fallback ? intakeThemeStyle(fallback) : undefined}>
-        {fallback && <IntakeBrandBar scenario={fallback} current="review" />}
-        <section className="page-head">
-          <div className="wrap">
-            <p className="eyebrow">Review queue</p>
-            <h1>Case not found</h1>
-            <p>No case matches {decodeURIComponent(ticketId)}. It may have been cleared by a demo reset.</p>
-          </div>
-        </section>
-        <div className="wrap section">
-          <p>
-            <Link className="btn" href={`/intake/review?scenario=${scenarioId}`}>
-              Back to the queue
-            </Link>
-          </p>
-        </div>
-      </div>
-    );
-  }
+  if (!item || !scenario) notFound();
   const loan = item.history.loan;
   const failed = item.rules.filter((rule) => rule.result === 'fail').length;
 

@@ -11,7 +11,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
   const id = param(await searchParams, 'scenario')?.trim() ?? '';
   const scenario = id ? getScenario(id) : undefined;
   if (!scenario) return absoluteTitle(id ? 'Scenario not found' : 'Make a payment');
-  return scenarioTitle(scenario.paymentPortal?.title ?? 'Make a payment', scenario.brandName);
+  return scenarioTitle(scenario.paymentPortal?.title ?? 'Make a payment', scenario);
 }
 
 export default async function PayPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
