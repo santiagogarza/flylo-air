@@ -57,8 +57,7 @@ test('a missing case page returns HTTP 404 with Lakeline copy', async ({ page })
   await expect(page.locator('.intake-bar')).toContainText('Lakeline');
 });
 
-// Known gap: generateMetadata spreads the case-page metadata, so og:title and twitter:title still carry the ticket id after the 404 document title change (91a7464). Expected to fail until the builder aligns them.
-test.fail('a missing case page uses the same title in social tags as in the document title', async ({ page }) => {
+test('a missing case page uses the same title in social tags as in the document title', async ({ page }) => {
   await page.goto('/intake/review/LAF-REQ-0000?scenario=lakeline-hardship');
   await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', `Case not found · ${BRAND}`);
   await expect(page.locator('meta[name="twitter:title"]')).toHaveAttribute('content', `Case not found · ${BRAND}`);
