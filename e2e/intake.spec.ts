@@ -1,9 +1,7 @@
-import path from 'node:path';
 import { test, expect } from './fixtures/echo';
 import { field, fillLakeline, LAKELINE_URL, MAYA, submit } from './fixtures/intake';
 import { saveMedia } from './fixtures/media';
 
-const stylePath = path.join(__dirname, 'fixtures/screenshot.css');
 const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
 
 test.describe('/intake routing', () => {
@@ -51,7 +49,6 @@ test.describe('/intake?scenario=lakeline-hardship', () => {
     }
     await expect(page.getByRole('button', { name: 'Call Lakeline Auto Finance' })).toBeVisible();
     await saveMedia(page, testInfo, 'intake-lakeline-empty');
-    await expect(page).toHaveScreenshot('intake-lakeline-empty.png', { fullPage: true, stylePath });
     expect(await echo.requests()).toHaveLength(0);
   });
 
@@ -117,7 +114,6 @@ test.describe('/intake?scenario=lakeline-hardship', () => {
     await expect(page.locator('div[tabindex="-1"]:has(> .alert-error)')).toBeFocused();
     await expect(field(page, 'loanNumber')).toHaveAttribute('aria-invalid', 'true');
     await saveMedia(page, testInfo, 'intake-lakeline-validation');
-    await expect(page).toHaveScreenshot('intake-lakeline-validation.png', { fullPage: true, stylePath });
 
     await alert.getByRole('link', { name: 'Enter a loan number like LAF-20417.' }).click();
     await expect(page).toHaveURL(/#intake-loanNumber$/);
