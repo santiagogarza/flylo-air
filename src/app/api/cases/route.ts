@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   }
   const parsed = await readJson(request);
   if ('error' in parsed) return json(400, { ok: false, error: parsed.error });
-  const result = ingestCase(parsed.value);
+  const result = await ingestCase(parsed.value);
   return json(result.status, result.body);
 }
 

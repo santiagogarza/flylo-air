@@ -8,6 +8,7 @@ import {
   validateScenario,
 } from '@/scenarios/validate';
 import { resolveWebhook, type WebhookTarget } from '@/scenarios/webhook';
+import { currentBag } from './demo-store';
 import { asString, isAllowedOrigin, json, readJson, type ServerContext } from './http';
 
 export const FIRST_TICKET_NUMBER = 1001;
@@ -25,29 +26,37 @@ type StoredTicket = {
   delivered: boolean;
 };
 
-// In-memory only: each server instance keeps its own list, and a cold start empties it.
-const state: { nextByPrefix: Map<string, number>; tickets: StoredTicket[] } = {
-  nextByPrefix: new Map(),
-  tickets: [],
-};
+type TicketFile = { nextByPrefix: Record<string, number>; tickets: StoredTicket[] };
 
-export function resetTickets(): { cleared: number } {
+// Ids and the webhook body are unchanged. The list is saved through the demo store.
+async function loadTickets(): Promise<TicketFile> {
+  const stored = await (await currentBag()).read('tickets');
+  if (!stored || typeof stored !== 'object') return { nextByPrefix: {}, tickets: [] };
+  const value = stored as TicketFile;
+  return { nextByPrefix: value.nextByPrefix ?? {}, tickets: value.tickets ?? [] };
+}
+
+async function saveTickets(state: TicketFile): Promise<void> {
+  await (await currentBag()).write('tickets', state);
+}
+
+export async function resetTickets(): Promise<{ cleared: number }> {
+  const state = await loadTickets();
   const cleared = state.tickets.length;
-  state.nextByPrefix = new Map();
-  state.tickets = [];
+  await saveTickets({ nextByPrefix: {}, tickets: [] });
   return { cleared };
 }
 
-export function ticketCount(): number {
-  return state.tickets.length;
+export async function ticketCount(): Promise<number> {
+  return (await loadTickets()).tickets.length;
 }
 
-function allocateId(prefix: string): string {
-  const next = state.nextByPrefix.get(prefix) ?? FIRST_TICKET_NUMBER;
+function allocateId(state: TicketFile, prefix: string): string {
+  const next = state.nextByPrefix[prefix] ?? FIRST_TICKET_NUMBER;
   if (next >= RESERVED_TICKET_NUMBER) {
     throw new Error(`Live ${prefix} tickets stop before ${RESERVED_TICKET_NUMBER}.`);
   }
-  state.nextByPrefix.set(prefix, next + 1);
+  state.nextByPrefix[prefix] = next + 1;
   return `${prefix}${next}`;
 }
 
@@ -79,13 +88,15 @@ export async function handleCreateTicket(request: Request, ctx: ServerContext): 
   }
 
   const cleaned = cleanTicket(fields);
+  const state = await loadTickets();
   const ticket: StoredTicket = {
-    id: allocateId(LEGACY_PREFIX),
+    id: allocateId(state, LEGACY_PREFIX),
     createdAt: new Date().toISOString(),
     channel: raw.channel === 'voice' ? 'voice' : 'web',
     delivered: false,
   };
   state.tickets.push(ticket);
+  await saveTickets(state);
 
   const body = JSON.stringify({
     id: ticket.id,
@@ -100,6 +111,7 @@ export async function handleCreateTicket(request: Request, ctx: ServerContext): 
   });
 
   ticket.delivered = await deliver(ticket.id, body, resolveWebhook(undefined, ctx.env), ctx);
+  await saveTickets(state);
   if (!ticket.delivered) return json(502, { ok: false, id: ticket.id, status: 'not_delivered' });
   return json(201, { ok: true, id: ticket.id, status: 'received' });
 }
@@ -124,13 +136,15 @@ async function handleScenarioTicket(raw: Record<string, unknown>, ctx: ServerCon
   const category = scenarioCategory(scenario, fields);
   const createdAt = new Date().toISOString();
   const channel: Channel = raw.channel === 'voice' ? 'voice' : 'web';
+  const state = await loadTickets();
   const ticket: StoredTicket = {
-    id: allocateId(scenario.ticketPrefix),
+    id: allocateId(state, scenario.ticketPrefix),
     createdAt,
     channel,
     delivered: false,
   };
   state.tickets.push(ticket);
+  await saveTickets(state);
 
   const body = JSON.stringify({
     scenario: scenario.id,
@@ -144,6 +158,7 @@ async function handleScenarioTicket(raw: Record<string, unknown>, ctx: ServerCon
   });
 
   ticket.delivered = await deliver(ticket.id, body, resolveWebhook(scenario.webhook, ctx.env), ctx);
+  await saveTickets(state);
   if (!ticket.delivered) return json(502, { ok: false, id: ticket.id, status: 'not_delivered' });
   return json(201, { ok: true, id: ticket.id, status: 'received' });
 }
@@ -167,6 +182,7 @@ async function deliver(id: string, body: string, target: WebhookTarget, ctx: Ser
   let headers: Headers;
   try {
     headers = new Headers({ 'content-type': 'application/json' });
+    // Send the key exactly as stored. Do not add a Bearer prefix.
     headers.set(headerName, key);
   } catch {
     ctx.log('support webhook skipped: header name is not valid', id);

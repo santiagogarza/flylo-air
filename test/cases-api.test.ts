@@ -9,11 +9,11 @@ import { context, post } from './helpers';
 const keys = ['DEMO_RESET_KEY', 'CASES_INGEST_KEY'] as const;
 const saved: Record<string, string | undefined> = {};
 
-beforeEach(() => {
+beforeEach(async () => {
   for (const key of keys) saved[key] = process.env[key];
   process.env.DEMO_RESET_KEY = 'reset-me';
   delete process.env.CASES_INGEST_KEY;
-  resetCases();
+  await resetCases();
 });
 
 afterEach(() => {
@@ -60,7 +60,7 @@ describe('POST /api/cases', () => {
     expect(header.status).toBe(201);
     const created = await header.json();
     expect(created).toMatchObject({ ok: true, ticketId: 'LAF-REQ-2001', status: 'needs_review', emailed: false });
-    expect(getCase('LAF-REQ-2001')?.decision).toBe('APPROVE_EXTENSION');
+    expect((await getCase('LAF-REQ-2001'))?.decision).toBe('APPROVE_EXTENSION');
 
     process.env.CASES_INGEST_KEY = 'ingest-only';
     const denied = await ingest(post('/api/cases', ingestBody({ ticketId: 'LAF-REQ-2002' }), { authorization: 'Bearer reset-me' }));
@@ -92,7 +92,7 @@ describe('case actions', () => {
     expect(await first.json()).toMatchObject({ ok: true, status: 'sent', idempotent: false, emailed: false });
     const second = await act(post('/api/cases/LAF-REQ-9001', { action: 'send', by: 'Avery' }), { params: Promise.resolve({ ticketId: 'LAF-REQ-9001' }) });
     expect(await second.json()).toMatchObject({ status: 'sent', idempotent: true, emailed: false });
-    expect(getCase('LAF-REQ-9001')?.log.filter((entry) => entry.action === 'sent')).toHaveLength(1);
+    expect((await getCase('LAF-REQ-9001'))?.log.filter((entry) => entry.action === 'sent')).toHaveLength(1);
     expect(spy).not.toHaveBeenCalled();
     spy.mockRestore();
   });
@@ -104,7 +104,7 @@ describe('case actions', () => {
     );
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({ status: 'edited_sent', emailed: false });
-    const stored = getCase('LAF-REQ-9001');
+    const stored = await getCase('LAF-REQ-9001');
     expect(stored?.draft.startsWith('Updated draft')).toBe(true);
     expect(stored?.compliance.verdict).toBe('Edited');
   });
@@ -118,12 +118,12 @@ describe('case actions', () => {
 
 describe('sample cases and ingest', () => {
   it('keeps LAF-REQ-1001 free for a live intake ticket', async () => {
-    resetTickets();
-    const seeded = listCases('lakeline-hardship').map((item) => item.ticketId);
+    await resetTickets();
+    const seeded = (await listCases('lakeline-hardship')).map((item) => item.ticketId);
     expect(seeded).toHaveLength(11);
     expect(seeded.every((id) => Number(id.slice('LAF-REQ-'.length)) >= 9001)).toBe(true);
-    expect(getCase('LAF-REQ-1001')).toBeUndefined();
-    expect(getCase('LAF-REQ-9001')?.request.fullName).toBe('Maya Chen');
+    expect(await getCase('LAF-REQ-1001')).toBeUndefined();
+    expect((await getCase('LAF-REQ-9001'))?.request.fullName).toBe('Maya Chen');
 
     const fetchImpl = vi.fn(async () => new Response('{}', { status: 200 }));
     const ticket = await handleCreateTicket(
@@ -159,8 +159,8 @@ describe('sample cases and ingest', () => {
     const created = await ingested.json();
     expect(created).toMatchObject({ ok: true, ticketId: 'LAF-REQ-1001', status: 'needs_review' });
     expect(created.idempotent).not.toBe(true);
-    expect(getCase('LAF-REQ-1001')?.request.fullName).toBe('New Caller');
-    expect(getCase('LAF-REQ-9001')?.request.fullName).toBe('Maya Chen');
+    expect((await getCase('LAF-REQ-1001'))?.request.fullName).toBe('New Caller');
+    expect((await getCase('LAF-REQ-9001'))?.request.fullName).toBe('Maya Chen');
   });
 
   it('normalizes the loan number before looking it up', async () => {
@@ -172,7 +172,7 @@ describe('sample cases and ingest', () => {
       ),
     );
     expect(response.status).toBe(201);
-    const stored = getCase('LAF-REQ-2010');
+    const stored = await getCase('LAF-REQ-2010');
     expect(stored?.request.loanNumber).toBe('LAF-20417');
     expect(stored?.history.loan?.loanNumber).toBe('LAF-20417');
     expect(stored?.decision).toBe('APPROVE_EXTENSION');
@@ -186,7 +186,7 @@ describe('closed cases', () => {
     const sendRejected = await act(post('/api/cases/LAF-REQ-9001', { action: 'send', by: 'Avery' }), { params: Promise.resolve({ ticketId: 'LAF-REQ-9001' }) });
     expect(sendRejected.status).toBe(409);
     expect(await sendRejected.json()).toMatchObject({ ok: false, status: 'rejected', emailed: false });
-    expect(getCase('LAF-REQ-9001')?.status).toBe('rejected');
+    expect((await getCase('LAF-REQ-9001'))?.status).toBe('rejected');
 
     const escalated = await act(post('/api/cases/LAF-REQ-9002', { action: 'escalate', by: 'Avery' }), { params: Promise.resolve({ ticketId: 'LAF-REQ-9002' }) });
     expect(escalated.status).toBe(200);
@@ -195,8 +195,8 @@ describe('closed cases', () => {
       { params: Promise.resolve({ ticketId: 'LAF-REQ-9002' }) },
     );
     expect(sendEscalated.status).toBe(409);
-    expect(getCase('LAF-REQ-9002')?.status).toBe('escalated');
-    expect(getCase('LAF-REQ-9002')?.draft.startsWith('A new draft')).toBe(false);
+    expect((await getCase('LAF-REQ-9002'))?.status).toBe('escalated');
+    expect((await getCase('LAF-REQ-9002'))?.draft.startsWith('A new draft')).toBe(false);
   });
 
   it('still sends a case that needs review or has requested changes', async () => {
@@ -216,10 +216,10 @@ describe('closed cases', () => {
 describe('reset', () => {
   it('clears reviewer actions and reloads the sample cases', async () => {
     await act(post('/api/cases/LAF-REQ-9001', { action: 'reject', by: 'Avery' }), { params: Promise.resolve({ ticketId: 'LAF-REQ-9001' }) });
-    expect(getCase('LAF-REQ-9001')?.status).toBe('rejected');
+    expect((await getCase('LAF-REQ-9001'))?.status).toBe('rejected');
     const response = await handleReset(post('/api/reset', {}, { 'x-demo-reset-key': 'reset-me' }), context({ DEMO_RESET_KEY: 'reset-me' }));
     const body = await response.json();
     expect(body).toMatchObject({ ok: true, casesCleared: 11 });
-    expect(getCase('LAF-REQ-9001')?.status).toBe('needs_review');
+    expect((await getCase('LAF-REQ-9001'))?.status).toBe('needs_review');
   });
 });

@@ -1,15 +1,25 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { CaseActions } from '@/components/CaseActions';
 import { intakeThemeStyle } from '@/lib/intake-theme';
+import { scenarioTitle } from '@/lib/page-title';
 import { POLICY_SECTIONS } from '@/lib/hardship-policy';
 import { param, type SearchParams } from '@/lib/params';
 import { getScenario } from '@/scenarios';
 import { getCase } from '@/server/cases';
 
-export async function generateMetadata({ params }: { params: Promise<{ ticketId: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ ticketId: string }>;
+  searchParams: Promise<SearchParams>;
+}): Promise<Metadata> {
   const { ticketId } = await params;
-  return { title: decodeURIComponent(ticketId) };
+  const scenario = getScenario(param(await searchParams, 'scenario')?.trim() ?? '');
+  const id = decodeURIComponent(ticketId);
+  return scenario ? scenarioTitle(id, scenario.brandName) : { title: { absolute: id } };
 }
 
 export default async function CasePage({
@@ -22,19 +32,8 @@ export default async function CasePage({
   const { ticketId } = await params;
   const scenarioId = param(await searchParams, 'scenario')?.trim() ?? 'lakeline-hardship';
   const scenario = getScenario(scenarioId);
-  const item = getCase(decodeURIComponent(ticketId));
-  if (!item || !scenario) {
-    return (
-      <section className="page-head">
-        <div className="wrap">
-          <h1>Case not found</h1>
-          <p>
-            <Link href={`/intake/review?scenario=${scenarioId}`}>Back to the queue</Link>
-          </p>
-        </div>
-      </section>
-    );
-  }
+  const item = await getCase(decodeURIComponent(ticketId));
+  if (!item || !scenario) notFound();
   const loan = item.history.loan;
 
   return (

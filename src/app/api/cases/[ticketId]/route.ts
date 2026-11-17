@@ -9,7 +9,7 @@ export async function POST(request: Request, context: { params: Promise<{ ticket
   const { ticketId } = await context.params;
   const parsed = await readJson(request);
   if ('error' in parsed) return json(400, { ok: false, error: parsed.error });
-  const result = applyCaseAction(decodeURIComponent(ticketId), asString(parsed.value.action), {
+  const result = await applyCaseAction(decodeURIComponent(ticketId), asString(parsed.value.action), {
     by: asString(parsed.value.by),
     draft: typeof parsed.value.draft === 'string' ? parsed.value.draft : undefined,
   });

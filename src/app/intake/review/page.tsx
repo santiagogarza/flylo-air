@@ -24,8 +24,9 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
   const scenario = id ? getScenario(id) : undefined;
   if (!scenario) return <ScenarioCatalog missing={id || undefined} />;
   const status = param(params, 'status') ?? '';
-  const cases = listCases(scenario.id, status || undefined);
-  const counts = Object.fromEntries(STATUSES.map((item) => [item.id, listCases(scenario.id, item.id || undefined).length]));
+  const all = await listCases(scenario.id);
+  const cases = status ? all.filter((item) => item.status === status) : all;
+  const counts = Object.fromEntries(STATUSES.map((item) => [item.id, item.id ? all.filter((entry) => entry.status === item.id).length : all.length]));
 
   return (
     <div className="intake-theme" style={intakeThemeStyle(scenario)}>

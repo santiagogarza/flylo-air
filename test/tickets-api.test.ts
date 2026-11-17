@@ -24,8 +24,8 @@ function webhook(status = 200, body = '{"accepted":true,"url":"https://internal.
   return vi.fn(async (_url: string | URL | Request, _init?: RequestInit) => new Response(body, { status }));
 }
 
-beforeEach(() => {
-  resetTickets();
+beforeEach(async () => {
+  await resetTickets();
 });
 
 describe('POST /api/tickets', () => {
@@ -124,7 +124,7 @@ describe('POST /api/tickets', () => {
       expect(await response.json()).toEqual({ ok: false, id: null, status: 'invalid' });
     }
     expect(fetchImpl).not.toHaveBeenCalled();
-    expect(ticketCount()).toBe(0);
+    expect(await ticketCount()).toBe(0);
   });
 
   it('rejects other sites', async () => {
@@ -141,18 +141,18 @@ describe('POST /api/reset', () => {
     const ctx = context(env, webhook() as unknown as typeof fetch);
     await handleCreateTicket(post('/api/tickets', ticket), ctx);
     await handleCreateTicket(post('/api/tickets', ticket), ctx);
-    expect(ticketCount()).toBe(2);
+    expect(await ticketCount()).toBe(2);
 
-    const response = handleReset(post('/api/reset', {}, { 'x-demo-reset-key': 'reset-me' }), ctx);
+    const response = await handleReset(post('/api/reset', {}, { 'x-demo-reset-key': 'reset-me' }), ctx);
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({ ok: true, cleared: 2 });
-    expect(ticketCount()).toBe(0);
+    expect(await ticketCount()).toBe(0);
     expect((await (await handleCreateTicket(post('/api/tickets', ticket), ctx)).json()).id).toBe('FLY-SUP-1001');
   });
 
-  it('needs the reset key', () => {
-    expect(handleReset(post('/api/reset', {}, { 'x-demo-reset-key': 'wrong' }), context(env)).status).toBe(401);
-    expect(handleReset(post('/api/reset', {}), context(env)).status).toBe(401);
-    expect(handleReset(post('/api/reset', {}, { 'x-demo-reset-key': 'reset-me' }), context({})).status).toBe(503);
+  it('needs the reset key', async () => {
+    expect((await handleReset(post('/api/reset', {}, { 'x-demo-reset-key': 'wrong' }), context(env))).status).toBe(401);
+    expect((await handleReset(post('/api/reset', {}), context(env))).status).toBe(401);
+    expect((await handleReset(post('/api/reset', {}, { 'x-demo-reset-key': 'reset-me' }), context({}))).status).toBe(503);
   });
 });
