@@ -219,4 +219,23 @@ Lakeline cases are evaluated from `hardship-policy.md` and `loans.json`. Other s
 }
 ```
 
+### Artifacts and activity
+
+Each case carries `artifacts[]` and an `activity` log. Types are exported from `src/lib/case-artifacts.ts` (`CaseArtifact`, `CaseActivity`, `ArtifactType`, `ArtifactStatus`, `BotName`, `artifactCount`) and re-exported from `src/server/cases.ts`. `listCases` rows also carry `artifactCount`.
+
+```json
+{
+  "artifacts": [
+    { "type": "doc", "label": "Extension agreement drafted in Google Docs", "url": "https://mock.lakeline.example/docs/LAF-REQ-9001", "createdAt": "2026-11-16T15:03:00.000Z", "status": "drafted", "by": "Servicing" }
+  ],
+  "activity": [
+    { "at": "2026-11-16T15:02:00.000Z", "bot": "Compliance", "action": "Ran the policy checks", "detail": "APPROVE_EXTENSION" }
+  ]
+}
+```
+
+- `type`: `doc`, `sheet`, `email_draft`, `calendar`, `pr`, `record`. `status`: `drafted`, `created`, `logged`, `held`, `updated`, `sent`, `failed` (default `created`). `by` and `bot`: `Intake`, `Servicing`, `Compliance`, `Escalation`. URLs must be http or https and are mock links only.
+- Posting `POST /api/cases` with a `ticketId` that already exists **merges**. New artifacts and activity entries are appended, repeats are ignored (artifacts match on type, label and URL, and a repeat updates the status), and a case that still needs review also takes the changed request fields. A case that was already sent, edited, rejected or escalated keeps its status and request, and only gains artifacts and activity. `request` and `scenario` are optional on a merge. The response adds `artifactsAdded` and `activityAdded`.
+- Sample cases are seeded with mock artifacts such as "Extension agreement drafted in Google Docs", "Logged to Servicing Ledger", "Reply drafted in Gmail, not sent", "Callback held on calendar", and "Loan record updated".
+
 Cases live in memory, same as tickets. Reset reloads the eleven sample cases.

@@ -226,3 +226,101 @@ describe('reset', () => {
     expect((await getCase('LAF-REQ-9001'))?.status).toBe('needs_review');
   });
 });
+
+describe('artifacts and activity', () => {
+  const auth = { authorization: 'Bearer reset-me' };
+  const doc = { type: 'doc', label: 'Extension agreement drafted in Google Docs', url: 'https://mock.example.test/docs/1', status: 'drafted', by: 'Servicing' };
+
+  it('seeds mock artifacts and an activity log on the sample cases', async () => {
+    const rows = await listCases('lakeline-hardship');
+    expect(rows.every((row) => row.artifactCount === row.artifacts.length && row.artifactCount > 0)).toBe(true);
+    const santi = await getCase('LAF-REQ-9001');
+    expect(santi?.artifacts.map((item) => item.label)).toEqual(
+      expect.arrayContaining([
+        'Extension agreement drafted in Google Docs',
+        'Logged to Servicing Ledger',
+        'Reply drafted in Gmail, not sent',
+        'Loan record updated',
+      ]),
+    );
+    expect(santi?.artifacts.some((item) => item.type === 'calendar' && item.label.startsWith('Callback held on calendar'))).toBe(true);
+    for (const item of santi?.artifacts ?? []) {
+      expect(item.url).toMatch(/^https:\/\/mock\.lakeline\.example\//);
+      expect(Number.isNaN(Date.parse(item.createdAt))).toBe(false);
+    }
+    expect(new Set(santi?.activity.map((item) => item.bot))).toEqual(new Set(['Intake', 'Servicing', 'Compliance']));
+    const escalated = (await listCases('lakeline-hardship')).find((row) => row.decision === 'ESCALATE');
+    expect(escalated?.activity.some((item) => item.bot === 'Escalation')).toBe(true);
+  });
+
+  it('merges a second post for the same ticket instead of replacing it', async () => {
+    const first = await ingest(post('/api/cases', ingestBody({ ticketId: 'LAF-REQ-2100', artifacts: [doc], activity: [{ bot: 'Servicing', action: 'Drafted the agreement' }] }), auth));
+    expect(first.status).toBe(201);
+    const created = await getCase('LAF-REQ-2100');
+    expect(created?.artifacts).toHaveLength(1);
+    const baseActivity = created?.activity.length ?? 0;
+
+    const second = await ingest(
+      post(
+        '/api/cases',
+        {
+          ticketId: 'LAF-REQ-2100',
+          request: { reason: 'Updated reason from the caller.' },
+          artifacts: [
+            doc,
+            { type: 'email_draft', label: 'Reply drafted in Gmail, not sent', url: 'https://mock.example.test/mail/1', by: 'Compliance', status: 'drafted' },
+          ],
+          activity: [
+            { bot: 'Servicing', action: 'Drafted the agreement' },
+            { bot: 'Compliance', action: 'Checked disclosures' },
+          ],
+        },
+        auth,
+      ),
+    );
+    expect(second.status).toBe(200);
+    expect(await second.json()).toMatchObject({ ok: true, artifactsAdded: 1, activityAdded: 1 });
+    const merged = await getCase('LAF-REQ-2100');
+    expect(merged?.artifacts.map((item) => item.type)).toEqual(['doc', 'email_draft']);
+    expect(merged?.activity).toHaveLength(baseActivity + 1);
+    expect(merged?.request.reason).toBe('Updated reason from the caller.');
+    expect(merged?.request.fullName).toBe(LAKELINE_PERSONA.fullName);
+    expect(merged?.request.loanNumber).toBe('LAF-20417');
+
+    const repeat = await ingest(post('/api/cases', { ticketId: 'LAF-REQ-2100', artifacts: [doc] }, auth));
+    expect(await repeat.json()).toMatchObject({ artifactsAdded: 0, activityAdded: 0 });
+    expect((await getCase('LAF-REQ-2100'))?.artifacts).toHaveLength(2);
+  });
+
+  it('updates an artifact status on a repeat post and keeps handled cases handled', async () => {
+    await ingest(post('/api/cases', ingestBody({ ticketId: 'LAF-REQ-2101', artifacts: [doc] }), auth));
+    await act(post('/api/cases/LAF-REQ-2101', { action: 'send', by: 'Avery' }), { params: Promise.resolve({ ticketId: 'LAF-REQ-2101' }) });
+    const response = await ingest(
+      post('/api/cases', { ticketId: 'LAF-REQ-2101', request: { reason: 'ignored after send' }, artifacts: [{ ...doc, status: 'sent' }] }, auth),
+    );
+    expect(await response.json()).toMatchObject({ ok: true, status: 'sent', idempotent: true, artifactsAdded: 1 });
+    const stored = await getCase('LAF-REQ-2101');
+    expect(stored?.artifacts[0].status).toBe('sent');
+    expect(stored?.status).toBe('sent');
+    expect(stored?.request.reason).not.toBe('ignored after send');
+  });
+
+  it('names the bad artifact field', async () => {
+    const cases: [unknown, string][] = [
+      [[{ ...doc, type: 'video' }], 'artifacts[0].type must be one of'],
+      [[{ ...doc, label: ' ' }], 'artifacts[0].label is required.'],
+      [[{ ...doc, url: 'javascript:alert(1)' }], 'artifacts[0].url must be an http or https URL.'],
+      [[{ ...doc, by: 'Maya' }], 'artifacts[0].by must be one of'],
+      [[{ ...doc, status: 'maybe' }], 'artifacts[0].status must be one of'],
+      ['nope', 'artifacts must be an array.'],
+    ];
+    for (const [artifacts, message] of cases) {
+      const response = await ingest(post('/api/cases', ingestBody({ ticketId: 'LAF-REQ-2102', artifacts }), auth));
+      expect(response.status).toBe(400);
+      expect((await response.json()).error).toContain(message);
+    }
+    const badActivity = await ingest(post('/api/cases', ingestBody({ ticketId: 'LAF-REQ-2102', activity: [{ bot: 'Nobody', action: 'x' }] }), auth));
+    expect((await badActivity.json()).error).toContain('activity[0].bot must be one of');
+    expect(await getCase('LAF-REQ-2102')).toBeUndefined();
+  });
+});
