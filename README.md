@@ -140,13 +140,23 @@ Open the form at `/intake?scenario=<id>`. An unknown id shows the list of scenar
 
 ### Reset
 
-`POST /api/reset` with header `x-demo-reset-key: $DEMO_RESET_KEY` clears the in-memory ticket list and restarts every prefix at 1001 (`FLY-SUP-1001`, `LAF-REQ-1001`, …). It also clears reviewer actions on cases and reloads the sample queue from `loans.json`. The response is `{ ok: true, cleared, casesCleared }`. Reloading the form, or pressing **Start a new request**, only clears the browser. It does not call the reset API.
+`POST /api/reset` with header `x-demo-reset-key: $DEMO_RESET_KEY` clears the ticket list and restarts `/support` at `FLY-SUP-1001`. Scenario ids such as `LAF-REQ-` do **not** restart (see below). It also clears reviewer actions on cases and reloads the sample queue from `loans.json`. The response is `{ ok: true, cleared, casesCleared }`. Reloading the form, or pressing **Start a new request**, only clears the browser. It does not call the reset API.
 
 ```bash
 DEMO_URL=https://<your-deployment> DEMO_RESET_KEY=<key> npm run reset-demo
 ```
 
-Tickets live in memory on each server instance. A cold start also empties them.
+Scenario ticket ids never restart on reset. After `LAF-REQ-1046` and a reset, the next live ticket is `LAF-REQ-1047`. Cases are matched by ticket id, so reusing `LAF-REQ-1001` after a reset would let a new caller overwrite or merge into an old case. The counter is kept apart from the ticket and case lists, so reset cannot rewind it. Live ids skip the sample block `LAF-REQ-9001` to `LAF-REQ-9999` and continue at `LAF-REQ-10000`, and an id that already belongs to a case is skipped.
+
+How an id is claimed depends on the store:
+
+- **Blob:** each id is claimed by creating `flylo-demo/claims/<id>` with `allowOverwrite: false`. If the put fails because the id exists, the next number is tried, up to 50 attempts. If every attempt conflicts, `POST /api/tickets` returns 503 `{ ok: false, id: null, status: "unavailable" }` and no ticket is written or forwarded. Any other store error stops the request too, so a ticket never goes out without a claimed id.
+- **KV:** an atomic `INCR` on `flylo-demo:id:<prefix>`.
+- **Memory:** a synchronous increment.
+
+`/support` (`FLY-SUP-`) keeps its old behavior and payload. Reset still restarts it at `FLY-SUP-1001`.
+
+Without a Blob or KV store, tickets and the counter live in memory on each server instance, and a cold start empties them.
 
 ### Lakeline payload
 
@@ -184,7 +194,7 @@ Reference copies of the mock loans and the hardship policy are in `src/scenarios
 
 ### Review queue
 
-`/intake/review?scenario=lakeline-hardship` lists seeded cases as `LAF-REQ-9001` through `LAF-REQ-9011`. Live intake tickets still start at `LAF-REQ-1001`, so a new submission does not overwrite a sample case. Compliance stops come first, then other escalations, then payment plans, then approvals. `/intake/review/<ticketId>` shows the request, the loan on file, a Why panel (each rule links to `/intake/policy?scenario=lakeline-hardship#s1` through `#s6`), disclosures, and a draft reply.
+`/intake/review?scenario=lakeline-hardship` lists seeded cases as `LAF-REQ-9001` through `LAF-REQ-9011`. Live intake tickets start at `LAF-REQ-1001` and keep counting through resets, so a new submission does not overwrite a sample case. Compliance stops come first, then other escalations, then payment plans, then approvals. `/intake/review/<ticketId>` shows the request, the loan on file, a Why panel (each rule links to `/intake/policy?scenario=lakeline-hardship#s1` through `#s6`), disclosures, and a draft reply.
 
 **Send, Edit & send, Escalate, Reject, and Request changes are mock.** They write a name and a time onto the in-memory case. They do not email, text, or call a webhook. Sending twice returns the current status and does not add another log line. Editing the draft and then sending stores the new text. A rejected or escalated case stays that way: Send returns 409 and does not reopen it. A case that needs review, including one with requested changes, can still be edited and sent. Loan numbers on ingest are normalized the same way as the form, so `laf 20417` is stored as `LAF-20417`.
 

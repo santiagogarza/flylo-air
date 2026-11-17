@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST as ingest } from '@/app/api/cases/route';
 import { POST as act } from '@/app/api/cases/[ticketId]/route';
 import { getCase, listCases, resetCases } from '@/server/cases';
+import { clearDemoMemoryForTests } from '@/server/demo-store';
 import { handleReset } from '@/server/reset';
 import { handleCreateTicket, resetTickets } from '@/server/tickets';
 import { context, post } from './helpers';
@@ -14,6 +15,7 @@ beforeEach(async () => {
   for (const key of keys) saved[key] = process.env[key];
   process.env.DEMO_RESET_KEY = 'reset-me';
   delete process.env.CASES_INGEST_KEY;
+  clearDemoMemoryForTests();
   await resetCases();
 });
 

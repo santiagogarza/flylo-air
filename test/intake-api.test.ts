@@ -1,5 +1,6 @@
 import { LAKELINE_PERSONA } from '@/scenarios/lakeline/persona';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { clearDemoMemoryForTests } from '@/server/demo-store';
 import { handleCreateTicket, resetTickets } from '@/server/tickets';
 import { context, post } from './helpers';
 
@@ -36,6 +37,7 @@ function webhook(status = 200) {
 }
 
 beforeEach(async () => {
+  clearDemoMemoryForTests();
   await resetTickets();
 });
 
