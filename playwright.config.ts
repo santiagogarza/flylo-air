@@ -12,8 +12,8 @@ const serverEnv: Record<string, string> = {
   SUPPORT_WEBHOOK_KEY: 'e2e-webhook-key',
   DEMO_RESET_KEY: 'e2e-reset-key',
   XAI_API_KEY: '',
-  LAKELINE_WEBHOOK_URL: '',
-  LAKELINE_WEBHOOK_KEY: '',
+  LAKELINE_WEBHOOK_URL: `${echoURL}/lakeline-hook`,
+  LAKELINE_WEBHOOK_KEY: 'e2e-lakeline-key',
   NEXT_TELEMETRY_DISABLED: '1',
 };
 
