@@ -4,11 +4,17 @@ import { IntakeBrandBar } from '@/components/IntakeBrandBar';
 import { ScenarioCatalog } from '@/components/ScenarioCatalog';
 import { bandLabel, decisionLabel, statusLabel } from '@/lib/case-labels';
 import { intakeThemeStyle } from '@/lib/intake-theme';
+import { absoluteTitle, scenarioTitle } from '@/lib/page-title';
 import { param, type SearchParams } from '@/lib/params';
 import { getScenario } from '@/scenarios';
 import { listCases, type CaseStatus } from '@/server/cases';
 
-export const metadata: Metadata = { title: 'Review queue' };
+export async function generateMetadata({ searchParams }: { searchParams: Promise<SearchParams> }): Promise<Metadata> {
+  const id = param(await searchParams, 'scenario')?.trim() ?? '';
+  const scenario = id ? getScenario(id) : undefined;
+  if (!scenario) return absoluteTitle(id ? 'Scenario not found' : 'Review queue');
+  return scenarioTitle('Review queue', scenario.brandName);
+}
 
 const STATUSES: { id: '' | CaseStatus; label: string }[] = [
   { id: '', label: 'All' },

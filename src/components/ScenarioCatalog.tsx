@@ -5,6 +5,19 @@ export function ScenarioCatalog({ missing }: { missing?: string }) {
   const scenarios = listScenarios();
   return (
     <div className="intake-theme">
+      <div className="intake-bar">
+        <div className="wrap intake-bar-inner">
+          <span className="intake-wordmark" aria-label="Intake">
+            <span className="intake-mark" aria-hidden="true">
+              I
+            </span>
+            <span className="intake-wordmark-text">
+              <span className="intake-wordmark-name">Intake</span>
+            </span>
+          </span>
+          <span className="intake-sample">Sample</span>
+        </div>
+      </div>
       <section className="page-head">
         <div className="wrap">
           <p className="eyebrow">{missing ? 'Not found' : 'Intake'}</p>

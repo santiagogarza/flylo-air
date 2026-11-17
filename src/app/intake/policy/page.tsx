@@ -3,12 +3,18 @@ import Link from 'next/link';
 import { IntakeBrandBar } from '@/components/IntakeBrandBar';
 import { ScenarioCatalog } from '@/components/ScenarioCatalog';
 import { intakeThemeStyle } from '@/lib/intake-theme';
+import { absoluteTitle, scenarioTitle } from '@/lib/page-title';
 import { parsePolicy } from '@/lib/policy-doc';
 import { param, type SearchParams } from '@/lib/params';
 import { getScenario } from '@/scenarios';
 import { readScenarioFile } from '@/server/policy-file';
 
-export const metadata: Metadata = { title: 'Hardship policy' };
+export async function generateMetadata({ searchParams }: { searchParams: Promise<SearchParams> }): Promise<Metadata> {
+  const id = param(await searchParams, 'scenario')?.trim() ?? '';
+  const scenario = id ? getScenario(id) : undefined;
+  if (!scenario) return absoluteTitle(id ? 'Scenario not found' : 'Hardship policy');
+  return scenarioTitle('Hardship policy', scenario.brandName);
+}
 
 export default async function PolicyPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const id = param(await searchParams, 'scenario')?.trim() ?? '';

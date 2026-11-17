@@ -4,7 +4,7 @@ import { CaseActions } from '@/components/CaseActions';
 import { IntakeBrandBar } from '@/components/IntakeBrandBar';
 import { bandLabel, decisionLabel, formatWhen, statusLabel } from '@/lib/case-labels';
 import { intakeThemeStyle } from '@/lib/intake-theme';
-import { scenarioTitle } from '@/lib/page-title';
+import { absoluteTitle, scenarioTitle } from '@/lib/page-title';
 import { POLICY_SECTIONS } from '@/lib/hardship-policy';
 import { param, type SearchParams } from '@/lib/params';
 import { getScenario } from '@/scenarios';
@@ -18,9 +18,11 @@ export async function generateMetadata({
   searchParams: Promise<SearchParams>;
 }): Promise<Metadata> {
   const { ticketId } = await params;
-  const scenario = getScenario(param(await searchParams, 'scenario')?.trim() ?? '');
   const id = decodeURIComponent(ticketId);
-  return scenario ? scenarioTitle(id, scenario.brandName) : { title: { absolute: id } };
+  const requested = param(await searchParams, 'scenario')?.trim() ?? '';
+  if (requested && !getScenario(requested)) return absoluteTitle('Case not found');
+  const scenario = getScenario(requested || 'lakeline-hardship');
+  return scenario ? scenarioTitle(id, scenario.brandName) : absoluteTitle(id);
 }
 
 export default async function CasePage({
