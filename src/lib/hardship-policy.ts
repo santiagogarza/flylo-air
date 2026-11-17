@@ -1,3 +1,5 @@
+import { claimsDispute } from './dispute-intent';
+
 export type LoanRecord = {
   loanNumber: string;
   borrower?: string;
@@ -201,7 +203,12 @@ function complianceRule(loan: LoanRecord | null, text: string): PolicyRule {
   const criteria: RuleCriterion[] = [
     flagOrWords('Not active-duty and no SCRA flag', flags, ['active_duty_military'], text, ['active duty', 'scra', 'military'], 'Active-duty or SCRA protection is flagged or mentioned.'),
     flagOrWords('No bankruptcy', flags, ['bankruptcy_filed'], text, ['bankruptcy', 'bankrupt'], 'Bankruptcy is flagged or mentioned.'),
-    wordsClear('Caller does not dispute the debt, a fee, or a payment', text, ['dispute'], 'The caller disputes the debt, a fee, or a payment.'),
+    {
+      label: 'Caller does not dispute the debt, a fee, or a payment',
+      ...(claimsDispute(text)
+        ? { result: 'fail' as const, detail: 'The caller disputes the debt, a fee, or a payment.' }
+        : { result: 'pass' as const, detail: 'Not mentioned.' }),
+    },
     wordsClear(
       'Caller does not ask us to stop contact',
       text,

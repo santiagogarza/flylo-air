@@ -10,11 +10,26 @@ import {
   type PolicyRule,
   type PriorityBand,
 } from '@/lib/hardship-policy';
+import {
+  ARTIFACT_STATUSES,
+  ARTIFACT_TYPES,
+  BOTS,
+  artifactCount,
+  artifactKey,
+  type ArtifactStatus,
+  type ArtifactType,
+  type BotName,
+  type CaseActivity,
+  type CaseArtifact,
+} from '@/lib/case-artifacts';
 import { normalizeLoanNumber } from '@/scenarios/normalizers';
 import { currentBag } from './demo-store';
 import { asString } from './http';
 
 export type CaseStatus = 'needs_review' | 'sent' | 'edited_sent' | 'escalated' | 'rejected' | 'changes_requested';
+
+export type { ArtifactStatus, ArtifactType, BotName, CaseActivity, CaseArtifact } from '@/lib/case-artifacts';
+export { artifactCount } from '@/lib/case-artifacts';
 
 export type CaseLog = { at: string; action: string; by: string };
 
@@ -32,8 +47,12 @@ export type ReviewCase = {
   draft: string;
   status: CaseStatus;
   log: CaseLog[];
+  artifacts: CaseArtifact[];
+  activity: CaseActivity[];
   updatedAt: string;
 };
+
+export type ReviewCaseRow = ReviewCase & { artifactCount: number };
 
 type RawLoan = LoanRecord & { borrower: string; email: string; demoPath: string };
 
@@ -44,7 +63,9 @@ type CaseFile = { cases: ReviewCase[] };
 
 async function loadCases(): Promise<ReviewCase[]> {
   const stored = await (await currentBag()).read('cases');
-  if (stored && typeof stored === 'object' && Array.isArray((stored as CaseFile).cases)) return (stored as CaseFile).cases;
+  if (stored && typeof stored === 'object' && Array.isArray((stored as CaseFile).cases)) {
+    return (stored as CaseFile).cases.map((item) => ({ ...item, artifacts: item.artifacts ?? [], activity: item.activity ?? [] }));
+  }
   const seeded = seedCases();
   await saveCases(seeded);
   return seeded;
@@ -54,11 +75,11 @@ async function saveCases(cases: ReviewCase[]): Promise<void> {
   await (await currentBag()).write('cases', { cases });
 }
 
-export async function listCases(scenario: string, status?: string): Promise<ReviewCase[]> {
+export async function listCases(scenario: string, status?: string): Promise<ReviewCaseRow[]> {
   const cases = await loadCases();
   return cases
     .filter((item) => item.scenario === scenario && (!status || item.status === status))
-    .map(clone)
+    .map((item) => ({ ...clone(item), artifactCount: artifactCount(item) }))
     .sort((a, b) => priorityRank(a.band) - priorityRank(b.band) || a.ticketId.localeCompare(b.ticketId));
 }
 
@@ -81,27 +102,81 @@ export async function resetCases(options?: { empty?: boolean }): Promise<{ clear
 }
 
 export async function ingestCase(raw: Record<string, unknown>): Promise<{ status: number; body: Record<string, unknown> }> {
-  const parsed = parseIngest(raw);
+  const cases = await loadCases();
+  const existing = cases.find((item) => item.ticketId === (asString(raw.ticketId) || asString(raw.id)));
+  const parsed = parseIngest(raw, existing);
   if ('error' in parsed) return { status: 400, body: { ok: false, error: parsed.error } };
 
-  const cases = await loadCases();
-  const existing = cases.find((item) => item.ticketId === parsed.value.ticketId);
-  if (existing && existing.status !== 'needs_review') {
+  if (existing) {
+    const added = mergeExtras(existing, parsed.value);
+    if (existing.status === 'needs_review') {
+      const next = buildStored(mergeValue(existing, parsed.value), existing);
+      Object.assign(existing, next);
+      existing.log.push({ at: new Date().toISOString(), action: 'updated', by: 'ingest' });
+      await saveCases(cases);
+      return { status: 200, body: { ok: true, ticketId: existing.ticketId, status: existing.status, emailed: false, artifactsAdded: added.artifacts, activityAdded: added.activity } };
+    }
+    if (added.artifacts || added.activity) await saveCases(cases);
     return {
       status: 200,
-      body: { ok: true, ticketId: existing.ticketId, status: existing.status, idempotent: true, emailed: false },
+      body: { ok: true, ticketId: existing.ticketId, status: existing.status, idempotent: true, emailed: false, artifactsAdded: added.artifacts, activityAdded: added.activity },
     };
   }
 
-  const next = buildStored(parsed.value, existing?.log ?? []);
-  if (existing) {
-    Object.assign(existing, next, { log: [...existing.log, { at: new Date().toISOString(), action: 'updated', by: 'ingest' }] });
-    await saveCases(cases);
-    return { status: 200, body: { ok: true, ticketId: existing.ticketId, status: existing.status, emailed: false } };
-  }
+  const next = buildStored(parsed.value, null);
+  mergeExtras(next, parsed.value);
   cases.push(next);
   await saveCases(cases);
   return { status: 201, body: { ok: true, ticketId: next.ticketId, status: next.status, emailed: false } };
+}
+
+function mergeExtras(item: ReviewCase, value: IngestValue): { artifacts: number; activity: number } {
+  let artifacts = 0;
+  for (const incoming of value.artifacts) {
+    const found = item.artifacts.find((current) => artifactKey(current) === artifactKey(incoming));
+    if (!found) {
+      item.artifacts.push(incoming);
+      artifacts += 1;
+    } else if (found.status !== incoming.status || found.by !== incoming.by) {
+      found.status = incoming.status;
+      found.by = incoming.by;
+      artifacts += 1;
+    }
+  }
+  let activity = 0;
+  for (const incoming of value.activity) {
+    const duplicate = item.activity.some(
+      (current) =>
+        current.bot === incoming.bot &&
+        current.action === incoming.action &&
+        (current.detail ?? '') === (incoming.detail ?? '') &&
+        (!incoming.explicitAt || current.at === incoming.at),
+    );
+    if (!duplicate) {
+      const { explicitAt: _explicit, ...entry } = incoming;
+      item.activity.push(entry);
+      activity += 1;
+    }
+  }
+  if (artifacts || activity) item.updatedAt = new Date().toISOString();
+  return { artifacts, activity };
+}
+
+function mergeValue(existing: ReviewCase, value: IngestValue): IngestValue {
+  const request = { ...existing.request };
+  for (const [key, field] of Object.entries(value.request)) {
+    if (field !== undefined && field !== '') (request as Record<string, unknown>)[key] = field;
+  }
+  const priorIds = new Set(value.priorTickets.map((item) => item.id));
+  return {
+    ...value,
+    request,
+    loan: value.loan ?? existing.history.loan,
+    priorTickets: [...existing.history.priorTickets.filter((item) => !priorIds.has(item.id)), ...value.priorTickets],
+    draft: value.draft ?? existing.draft,
+    decision: value.decision ?? (value.scenario === 'lakeline-hardship' ? undefined : existing.decision),
+    rules: value.rules.length ? value.rules : existing.rules,
+  };
 }
 
 /**
@@ -184,9 +259,71 @@ function seedCases(): ReviewCase[] {
       draft,
       status: 'needs_review',
       log: [{ at: SEED_AT, action: 'seeded', by: 'loans.json' }],
+      ...seedExtras(`LAF-REQ-${9001 + index}`, request, evaluation),
       updatedAt: SEED_AT,
     };
   });
+}
+
+const MOCK_HOST = 'https://mock.lakeline.example';
+
+function seedExtras(ticketId: string, request: HardshipRequest, evaluation: ReturnType<typeof evaluateHardship>): { artifacts: CaseArtifact[]; activity: CaseActivity[] } {
+  const at = (minutes: number) => new Date(Date.parse(SEED_AT) + minutes * 60_000).toISOString();
+  const artifact = (type: ArtifactType, label: string, path: string, status: ArtifactStatus, by: BotName, minutes: number): CaseArtifact => ({
+    type,
+    label,
+    url: `${MOCK_HOST}/${path}/${ticketId}`,
+    createdAt: at(minutes),
+    status,
+    by,
+  });
+  const artifacts: CaseArtifact[] = [];
+  const activity: CaseActivity[] = [
+    { at: at(0), bot: 'Intake', action: 'Request received', detail: request.requestedChange },
+    { at: at(1), bot: 'Servicing', action: 'Checked the loan record', detail: request.loanNumber },
+    { at: at(2), bot: 'Compliance', action: 'Ran the policy checks', detail: evaluation.decision },
+  ];
+  const decision = evaluation.decision;
+  const portal = request.requestedChange === 'Payment portal problem';
+
+  if (decision === 'APPROVE_EXTENSION') {
+    artifacts.push(artifact('doc', 'Extension agreement drafted in Google Docs', 'docs', 'drafted', 'Servicing', 3));
+    activity.push({ at: at(3), bot: 'Servicing', action: 'Drafted the extension agreement', detail: 'Google Docs' });
+  } else if (decision === 'APPROVE_DUE_DATE_CHANGE') {
+    artifacts.push(artifact('doc', 'Due-date change letter drafted in Google Docs', 'docs', 'drafted', 'Servicing', 3));
+    activity.push({ at: at(3), bot: 'Servicing', action: 'Drafted the due-date change letter', detail: 'Google Docs' });
+  } else if (decision === 'OFFER_PAYMENT_PLAN') {
+    artifacts.push(artifact('doc', 'Payment plan agreement drafted in Google Docs', 'docs', 'drafted', 'Servicing', 3));
+    activity.push({ at: at(3), bot: 'Servicing', action: 'Drafted the payment plan agreement', detail: 'Google Docs' });
+  }
+
+  if (decision !== 'ESCALATE') {
+    artifacts.push(artifact('sheet', 'Logged to Servicing Ledger', 'sheets', 'logged', 'Servicing', 4));
+    activity.push({ at: at(4), bot: 'Servicing', action: 'Logged the request to the Servicing Ledger' });
+    artifacts.push(artifact('record', 'Loan record updated', 'records', 'updated', 'Servicing', 5));
+    activity.push({ at: at(5), bot: 'Servicing', action: 'Updated the loan record', detail: request.loanNumber });
+  }
+
+  artifacts.push(artifact('email_draft', 'Reply drafted in Gmail, not sent', 'mail', 'drafted', 'Compliance', 6));
+  activity.push({ at: at(6), bot: 'Compliance', action: 'Checked the reply for required disclosures', detail: 'Reply is a draft and has not been sent' });
+
+  if (decision !== 'ESCALATE') {
+    artifacts.push(artifact('calendar', `Callback held on calendar (${request.callbackWindow || 'any time'})`, 'calendar', 'held', 'Intake', 7));
+    activity.push({ at: at(7), bot: 'Intake', action: 'Held a callback slot', detail: request.callbackWindow });
+  }
+
+  if (portal) {
+    artifacts.push(artifact('pr', 'Payment portal fix opened as a pull request', 'pull', 'created', 'Escalation', 8));
+    activity.push({ at: at(8), bot: 'Escalation', action: 'Opened a pull request for the portal bug' });
+  } else if (evaluation.handoff) {
+    artifacts.push(artifact('record', `Handed off to ${evaluation.handoff.team}`, 'handoffs', 'created', 'Escalation', 8));
+    activity.push({ at: at(8), bot: 'Escalation', action: `Flagged for ${evaluation.handoff.team}`, detail: evaluation.handoff.reason });
+  }
+
+  return {
+    artifacts,
+    activity: activity.map((entry) => (entry.detail ? entry : { at: entry.at, bot: entry.bot, action: entry.action })),
+  };
 }
 
 function sampleRequest(loan: RawLoan): HardshipRequest {
@@ -226,32 +363,87 @@ type IngestValue = {
   draft?: string;
   decision?: string;
   rules: ReturnType<typeof evaluateHardship>['rules'];
+  artifacts: CaseArtifact[];
+  activity: (CaseActivity & { explicitAt?: boolean })[];
 };
 
-function parseIngest(raw: Record<string, unknown>): { error: string } | { value: IngestValue } {
+function parseIngest(raw: Record<string, unknown>, existing?: ReviewCase): { error: string } | { value: IngestValue } {
   const ticketId = asString(raw.ticketId) || asString(raw.id);
   if (!ticketId) return { error: 'ticketId is required.' };
   if (!/^[A-Za-z0-9-]{4,40}$/.test(ticketId)) return { error: 'ticketId must be 4 to 40 letters, numbers, or hyphens.' };
-  const scenario = asString(raw.scenario).trim();
+  const scenario = asString(raw.scenario).trim() || existing?.scenario || '';
   if (!scenario) return { error: 'scenario is required.' };
   if (!getScenario(scenario)) return { error: `Unknown scenario "${scenario}".` };
-  const requestRaw = raw.request ?? raw.fields;
+  const requestRaw = raw.request ?? raw.fields ?? (existing ? {} : undefined);
   if (!requestRaw || typeof requestRaw !== 'object' || Array.isArray(requestRaw)) return { error: 'request must be an object of fields.' };
   const request = requestFrom(requestRaw as Record<string, unknown>);
-  if (scenario === 'lakeline-hardship' && !request.loanNumber) return { error: 'request.loanNumber is required.' };
+  if (scenario === 'lakeline-hardship' && !request.loanNumber && !existing) return { error: 'request.loanNumber is required.' };
+  const artifacts = artifactsFrom(raw.artifacts);
+  if ('error' in artifacts) return artifacts;
+  const activity = activityFrom(raw.activity);
+  if ('error' in activity) return activity;
   const rules = rulesFrom(raw.rules);
   if ('error' in rules) return rules;
   const decision = asString(raw.decision).trim();
-  if (scenario !== 'lakeline-hardship' && (rules.value.length === 0 || !decision)) {
+  if (scenario !== 'lakeline-hardship' && !existing && (rules.value.length === 0 || !decision)) {
     return { error: 'rules is required when this scenario has no policy evaluator. decision is required too.' };
   }
   const prior = priorTicketsFrom(raw.history);
   if ('error' in prior) return prior;
-  const loan = loanFrom(raw.history, request.loanNumber);
+  const loan = loanFrom(raw.history, request.loanNumber || existing?.request.loanNumber);
   if ('error' in loan) return loan;
   const draft = raw.draft === undefined ? undefined : asString(raw.draft);
   if (raw.draft !== undefined && !draft) return { error: 'draft must be a non-empty string when it is sent.' };
-  return { value: { ticketId, scenario, request, priorTickets: prior.value, loan: loan.value, draft, decision: decision || undefined, rules: rules.value } };
+  return { value: { ticketId, scenario, request, priorTickets: prior.value, loan: loan.value, draft, decision: decision || undefined, rules: rules.value, artifacts: artifacts.value, activity: activity.value } };
+}
+
+function artifactsFrom(raw: unknown): { error: string } | { value: CaseArtifact[] } {
+  if (raw === undefined) return { value: [] };
+  if (!Array.isArray(raw)) return { error: 'artifacts must be an array.' };
+  const value: CaseArtifact[] = [];
+  for (const [index, entry] of raw.entries()) {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return { error: `artifacts[${index}] must be an object.` };
+    const item = entry as Record<string, unknown>;
+    const type = asString(item.type);
+    if (!(ARTIFACT_TYPES as readonly string[]).includes(type)) return { error: `artifacts[${index}].type must be one of ${ARTIFACT_TYPES.join(', ')}.` };
+    const label = asString(item.label).trim();
+    if (!label) return { error: `artifacts[${index}].label is required.` };
+    const url = asString(item.url).trim();
+    if (!/^https?:\/\/\S+$/i.test(url)) return { error: `artifacts[${index}].url must be an http or https URL.` };
+    const status = asString(item.status) || 'created';
+    if (!(ARTIFACT_STATUSES as readonly string[]).includes(status)) return { error: `artifacts[${index}].status must be one of ${ARTIFACT_STATUSES.join(', ')}.` };
+    const by = asString(item.by) || 'Intake';
+    if (!(BOTS as readonly string[]).includes(by)) return { error: `artifacts[${index}].by must be one of ${BOTS.join(', ')}.` };
+    const at = timeFrom(item.createdAt);
+    if (item.createdAt !== undefined && !at) return { error: `artifacts[${index}].createdAt must be an ISO date.` };
+    value.push({ type: type as ArtifactType, label, url, createdAt: at ?? new Date().toISOString(), status: status as ArtifactStatus, by: by as BotName });
+  }
+  return { value };
+}
+
+function activityFrom(raw: unknown): { error: string } | { value: (CaseActivity & { explicitAt?: boolean })[] } {
+  if (raw === undefined) return { value: [] };
+  if (!Array.isArray(raw)) return { error: 'activity must be an array.' };
+  const value: (CaseActivity & { explicitAt?: boolean })[] = [];
+  for (const [index, entry] of raw.entries()) {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return { error: `activity[${index}] must be an object.` };
+    const item = entry as Record<string, unknown>;
+    const bot = asString(item.bot);
+    if (!(BOTS as readonly string[]).includes(bot)) return { error: `activity[${index}].bot must be one of ${BOTS.join(', ')}.` };
+    const action = asString(item.action).trim();
+    if (!action) return { error: `activity[${index}].action is required.` };
+    const at = timeFrom(item.at);
+    if (item.at !== undefined && !at) return { error: `activity[${index}].at must be an ISO date.` };
+    const detail = asString(item.detail).trim();
+    value.push({ at: at ?? new Date().toISOString(), bot: bot as BotName, action, ...(detail ? { detail } : {}), explicitAt: Boolean(at) });
+  }
+  return { value };
+}
+
+function timeFrom(raw: unknown): string | undefined {
+  if (typeof raw !== 'string' || !raw.trim()) return undefined;
+  const parsed = new Date(raw);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString();
 }
 
 function rulesFrom(raw: unknown): { error: string } | { value: PolicyRule[] } {
@@ -275,10 +467,12 @@ function rulesFrom(raw: unknown): { error: string } | { value: PolicyRule[] } {
   return { value };
 }
 
-function buildStored(value: IngestValue, log: CaseLog[]): ReviewCase {
+function buildStored(value: IngestValue, previous: ReviewCase | null): ReviewCase {
   const evaluation = value.scenario === 'lakeline-hardship' ? evaluateHardship(value.loan, value.request) : null;
   const draft = value.draft || (evaluation ? draftReply(value.request, evaluation) : '');
   const decision = evaluation?.decision ?? value.decision ?? 'RECEIVED';
+  const now = new Date().toISOString();
+  const activity = previous ? previous.activity : [...intakeActivity(value, evaluation, now)];
   return {
     ticketId: value.ticketId,
     scenario: value.scenario,
@@ -292,9 +486,21 @@ function buildStored(value: IngestValue, log: CaseLog[]): ReviewCase {
     handoff: evaluation?.handoff ?? null,
     draft,
     status: 'needs_review',
-    log: [...log, { at: new Date().toISOString(), action: 'ingested', by: 'api' }],
-    updatedAt: new Date().toISOString(),
+    log: [...(previous?.log ?? []), { at: now, action: 'ingested', by: 'api' }],
+    artifacts: previous ? previous.artifacts : [],
+    activity,
+    updatedAt: now,
   };
+}
+
+function intakeActivity(value: IngestValue, evaluation: ReturnType<typeof evaluateHardship> | null, at: string): CaseActivity[] {
+  const entries: CaseActivity[] = [{ at, bot: 'Intake', action: 'Request received', detail: value.request.requestedChange || undefined }];
+  if (evaluation) {
+    entries.push({ at, bot: 'Servicing', action: 'Checked the loan record', detail: value.loan ? value.loan.loanNumber : 'Loan not found' });
+    entries.push({ at, bot: 'Compliance', action: 'Ran the policy checks', detail: evaluation.decision });
+    if (evaluation.handoff) entries.push({ at, bot: 'Escalation', action: `Flagged for ${evaluation.handoff.team}`, detail: evaluation.handoff.reason });
+  }
+  return entries.map((entry) => (entry.detail ? entry : { at: entry.at, bot: entry.bot, action: entry.action }));
 }
 
 function complianceFor(decision: string, draft: string, edits: string[]) {

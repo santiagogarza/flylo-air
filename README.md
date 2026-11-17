@@ -140,13 +140,23 @@ Open the form at `/intake?scenario=<id>`. An unknown id shows the list of scenar
 
 ### Reset
 
-`POST /api/reset` with header `x-demo-reset-key: $DEMO_RESET_KEY` clears the in-memory ticket list and restarts every prefix at 1001 (`FLY-SUP-1001`, `LAF-REQ-1001`, …). It also clears reviewer actions on cases and reloads the sample queue from `loans.json`. The response is `{ ok: true, cleared, casesCleared }`. Reloading the form, or pressing **Start a new request**, only clears the browser. It does not call the reset API.
+`POST /api/reset` with header `x-demo-reset-key: $DEMO_RESET_KEY` clears the ticket list and restarts `/support` at `FLY-SUP-1001`. Scenario ids such as `LAF-REQ-` do **not** restart (see below). It also clears reviewer actions on cases and reloads the sample queue from `loans.json`. The response is `{ ok: true, cleared, casesCleared }`. Reloading the form, or pressing **Start a new request**, only clears the browser. It does not call the reset API.
 
 ```bash
 DEMO_URL=https://<your-deployment> DEMO_RESET_KEY=<key> npm run reset-demo
 ```
 
-Tickets live in memory on each server instance. A cold start also empties them.
+Scenario ticket ids never restart on reset. After `LAF-REQ-1046` and a reset, the next live ticket is `LAF-REQ-1047`. Cases are matched by ticket id, so reusing `LAF-REQ-1001` after a reset would let a new caller overwrite or merge into an old case. The counter is kept apart from the ticket and case lists, so reset cannot rewind it. Live ids skip the sample block `LAF-REQ-9001` to `LAF-REQ-9999` and continue at `LAF-REQ-10000`, and an id that already belongs to a case is skipped.
+
+How an id is claimed depends on the store:
+
+- **Blob:** each id is claimed by creating `flylo-demo/claims/<id>` with `allowOverwrite: false`. If the put fails because the id exists, the next number is tried, up to 50 attempts. If every attempt conflicts, `POST /api/tickets` returns 503 `{ ok: false, id: null, status: "unavailable" }` and no ticket is written or forwarded. Any other store error stops the request too, so a ticket never goes out without a claimed id.
+- **KV:** an atomic `INCR` on `flylo-demo:id:<prefix>`.
+- **Memory:** a synchronous increment.
+
+`/support` (`FLY-SUP-`) keeps its old behavior and payload. Reset still restarts it at `FLY-SUP-1001`.
+
+Without a Blob or KV store, tickets and the counter live in memory on each server instance, and a cold start empties them.
 
 ### Lakeline payload
 
@@ -159,22 +169,24 @@ Tickets live in memory on each server instance. A cold start also empties them.
   "createdAt": "2026-11-17T12:00:00.000Z",
   "channel": "voice",
   "fields": {
-    "fullName": "Maya Chen",
+    "fullName": "Santi Garza",
     "loanNumber": "LAF-20417",
-    "email": "maya.chen@example.com",
+    "email": "santi.garza@flylo-air.com",
     "reason": "I had a medical bill this month and need to push my payment back a few weeks.",
     "requestedChange": "Payment extension",
     "callbackWindow": "Afternoons"
   },
   "category": "Payment extension",
-  "summary": "Payment extension request from Maya Chen (LAF-20417): I had a medical bill this month and need to push my payment back a few weeks.",
-  "description": "Maya Chen (loan LAF-20417, maya.chen@example.com) requested Payment extension. Reason: I had a medical bill this month and need to push my payment back a few weeks. Best callback window: Afternoons."
+  "summary": "Payment extension request from Santi Garza (LAF-20417): I had a medical bill this month and need to push my payment back a few weeks.",
+  "description": "Santi Garza (loan LAF-20417, santi.garza@flylo-air.com) requested Payment extension. Reason: I had a medical bill this month and need to push my payment back a few weeks. Best callback window: Afternoons."
 }
 ```
 
+The Lakeline demo caller is defined once in `src/scenarios/lakeline/persona.ts` (Santi Garza, loan LAF-20417, `santi.garza@flylo-air.com`). `loans.json` carries the same borrower and email for that loan.
+
 Greeting: *"Lakeline Auto Finance customer care. How can I help?"*
 
-Demo line: *"Hi, I'm Maya Chen, loan LAF-20417, maya.chen@example.com. I had a medical bill this month and need to push my payment back a few weeks. Afternoons are best to call me."*
+Demo line: *"Hi, I'm Santi Garza, loan LAF-20417, santi.garza@flylo-air.com. I had a medical bill this month and need to push my payment back a few weeks. Afternoons are best to call me."*
 
 `/intake/pay?scenario=lakeline-hardship` accepts a loan number and a normal amount and shows a confirmation. It does not charge a card. Callers who say the payment portal failed are talking about this page.
 
@@ -182,7 +194,7 @@ Reference copies of the mock loans and the hardship policy are in `src/scenarios
 
 ### Review queue
 
-`/intake/review?scenario=lakeline-hardship` lists seeded cases as `LAF-REQ-9001` through `LAF-REQ-9011`. Live intake tickets still start at `LAF-REQ-1001`, so a new submission does not overwrite a sample case. Compliance stops come first, then other escalations, then payment plans, then approvals. `/intake/review/<ticketId>` shows the request, the loan on file, a Why panel (each rule links to `/intake/policy?scenario=lakeline-hardship#s1` through `#s6`), disclosures, and a draft reply.
+`/intake/review?scenario=lakeline-hardship` lists seeded cases as `LAF-REQ-9001` through `LAF-REQ-9011`. Live intake tickets start at `LAF-REQ-1001` and keep counting through resets, so a new submission does not overwrite a sample case. Compliance stops come first, then other escalations, then payment plans, then approvals. `/intake/review/<ticketId>` shows the request, the loan on file, a Why panel (each rule links to `/intake/policy?scenario=lakeline-hardship#s1` through `#s6`), disclosures, and a draft reply.
 
 **Send, Edit & send, Escalate, Reject, and Request changes are mock.** They write a name and a time onto the in-memory case. They do not email, text, or call a webhook. Sending twice returns the current status and does not add another log line. Editing the draft and then sending stores the new text. A rejected or escalated case stays that way: Send returns 409 and does not reopen it. A case that needs review, including one with requested changes, can still be edited and sent. Loan numbers on ingest are normalized the same way as the form, so `laf 20417` is stored as `LAF-20417`.
 
@@ -195,9 +207,9 @@ Lakeline cases are evaluated from `hardship-policy.md` and `loans.json`. Other s
   "ticketId": "LAF-REQ-2001",
   "scenario": "lakeline-hardship",
   "request": {
-    "fullName": "Maya Chen",
+    "fullName": "Santi Garza",
     "loanNumber": "LAF-20417",
-    "email": "maya.chen@example.com",
+    "email": "santi.garza@flylo-air.com",
     "reason": "I had a medical bill this month and need to push my payment back a few weeks.",
     "requestedChange": "Payment extension",
     "callbackWindow": "Afternoons"
@@ -206,5 +218,24 @@ Lakeline cases are evaluated from `hardship-policy.md` and `loans.json`. Other s
   "draft": "Optional. If omitted, the desk writes a draft that includes the required disclosures."
 }
 ```
+
+### Artifacts and activity
+
+Each case carries `artifacts[]` and an `activity` log. Types are exported from `src/lib/case-artifacts.ts` (`CaseArtifact`, `CaseActivity`, `ArtifactType`, `ArtifactStatus`, `BotName`, `artifactCount`) and re-exported from `src/server/cases.ts`. `listCases` rows also carry `artifactCount`.
+
+```json
+{
+  "artifacts": [
+    { "type": "doc", "label": "Extension agreement drafted in Google Docs", "url": "https://mock.lakeline.example/docs/LAF-REQ-9001", "createdAt": "2026-11-16T15:03:00.000Z", "status": "drafted", "by": "Servicing" }
+  ],
+  "activity": [
+    { "at": "2026-11-16T15:02:00.000Z", "bot": "Compliance", "action": "Ran the policy checks", "detail": "APPROVE_EXTENSION" }
+  ]
+}
+```
+
+- `type`: `doc`, `sheet`, `email_draft`, `calendar`, `pr`, `record`. `status`: `drafted`, `created`, `logged`, `held`, `updated`, `sent`, `failed` (default `created`). `by` and `bot`: `Intake`, `Servicing`, `Compliance`, `Escalation`. URLs must be http or https and are mock links only.
+- Posting `POST /api/cases` with a `ticketId` that already exists **merges**. New artifacts and activity entries are appended, repeats are ignored (artifacts match on type, label and URL, and a repeat updates the status), and a case that still needs review also takes the changed request fields. A case that was already sent, edited, rejected or escalated keeps its status and request, and only gains artifacts and activity. `request` and `scenario` are optional on a merge. The response adds `artifactsAdded` and `activityAdded`.
+- Sample cases are seeded with mock artifacts such as "Extension agreement drafted in Google Docs", "Logged to Servicing Ledger", "Reply drafted in Gmail, not sent", "Callback held on calendar", and "Loan record updated".
 
 Cases live in memory, same as tickets. Reset reloads the eleven sample cases.

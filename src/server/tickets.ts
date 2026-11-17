@@ -8,12 +8,15 @@ import {
   validateScenario,
 } from '@/scenarios/validate';
 import { resolveWebhook, type WebhookTarget } from '@/scenarios/webhook';
-import { currentBag } from './demo-store';
+import { getCase } from './cases';
+import { currentBag, IdClaimError } from './demo-store';
 import { asString, isAllowedOrigin, json, readJson, type ServerContext } from './http';
 
 export const FIRST_TICKET_NUMBER = 1001;
-/** Sample review cases start here. Live tickets stay below this number. */
+/** Sample review cases use LAF-REQ-9001 and up. Live scenario ids jump over this block. */
 export const RESERVED_TICKET_NUMBER = 9001;
+export const RESERVED_TICKET_SPAN = 999;
+export const CLAIM_ATTEMPTS = 50;
 export const WEBHOOK_TIMEOUT_MS = 10_000;
 export const LEGACY_PREFIX = 'FLY-SUP-';
 
@@ -49,6 +52,23 @@ export async function resetTickets(): Promise<{ cleared: number }> {
 
 export async function ticketCount(): Promise<number> {
   return (await loadTickets()).tickets.length;
+}
+
+export function scenarioTicketNumber(sequence: number): number {
+  const number = FIRST_TICKET_NUMBER - 1 + sequence;
+  return number >= RESERVED_TICKET_NUMBER ? number + RESERVED_TICKET_SPAN : number;
+}
+
+// Scenario ids come from a counter that reset never touches, so a new caller cannot
+// receive an id that an older case already used.
+async function claimScenarioId(prefix: string): Promise<string> {
+  const bag = await currentBag();
+  const sequence = await bag.claimSeq(prefix, {
+    maxAttempts: CLAIM_ATTEMPTS,
+    name: (k) => `${prefix}${scenarioTicketNumber(k)}`,
+    accept: async (k) => !(await getCase(`${prefix}${scenarioTicketNumber(k)}`)),
+  });
+  return `${prefix}${scenarioTicketNumber(sequence)}`;
 }
 
 function allocateId(state: TicketFile, prefix: string): string {
@@ -136,9 +156,17 @@ async function handleScenarioTicket(raw: Record<string, unknown>, ctx: ServerCon
   const category = scenarioCategory(scenario, fields);
   const createdAt = new Date().toISOString();
   const channel: Channel = raw.channel === 'voice' ? 'voice' : 'web';
+  let id: string;
+  try {
+    id = await claimScenarioId(scenario.ticketPrefix);
+  } catch (error) {
+    if (!(error instanceof IdClaimError)) throw error;
+    ctx.log('ticket id claim failed', scenario.ticketPrefix, error.message);
+    return json(503, { ok: false, id: null, status: 'unavailable' });
+  }
   const state = await loadTickets();
   const ticket: StoredTicket = {
-    id: allocateId(state, scenario.ticketPrefix),
+    id,
     createdAt,
     channel,
     delivered: false,

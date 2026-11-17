@@ -1,3 +1,4 @@
+import { LAKELINE_PERSONA } from '@/scenarios/lakeline/persona';
 import { describe, expect, it } from 'vitest';
 import { ISSUE_CATEGORIES, TICKET_FIELDS } from '@/lib/support';
 import { createSubmitGuard } from '@/lib/submit-guard';
@@ -95,9 +96,9 @@ describe('field edge cases', () => {
 
   it('rejects very long text with a visible limit', () => {
     const errors = validateScenario(scenario(), {
-      fullName: 'Maya Chen',
+      fullName: LAKELINE_PERSONA.fullName,
       loanNumber: 'LAF-20417',
-      email: 'maya.chen@example.com',
+      email: LAKELINE_PERSONA.email,
       reason: 'a'.repeat(2001),
       requestedChange: 'Payment extension',
       callbackWindow: 'Afternoons',
@@ -107,9 +108,9 @@ describe('field edge cases', () => {
 
   it('flags a missing loan instead of dropping it silently', () => {
     const errors = validateScenario(scenario(), {
-      fullName: 'Maya Chen',
+      fullName: LAKELINE_PERSONA.fullName,
       loanNumber: '',
-      email: 'maya.chen@example.com',
+      email: LAKELINE_PERSONA.email,
       reason: 'I need to push my payment back a few weeks.',
       requestedChange: 'Payment extension',
       callbackWindow: 'Afternoons',
@@ -170,5 +171,16 @@ describe('voice failure copy', () => {
     expect(MIC_DENIED_MESSAGE).toMatch(/use the form/i);
     expect(CALL_DROPPED_MESSAGE).toMatch(/interrupted/);
     expect(CALL_DROPPED_MESSAGE).toMatch(/use the form/i);
+  });
+});
+
+describe('Lakeline persona', () => {
+  it('matches the loan on file and appears in the demo line', async () => {
+    const loansFile = (await import('@/scenarios/lakeline/loans.json')).default as { loans: { loanNumber: string; borrower: string; email: string }[] };
+    const loan = loansFile.loans.find((item) => item.loanNumber === LAKELINE_PERSONA.loanNumber);
+    expect(loan?.borrower).toBe(LAKELINE_PERSONA.fullName);
+    expect(loan?.email).toBe(LAKELINE_PERSONA.email);
+    const { LAKELINE_DEMO_LINE } = await import('@/scenarios/lakeline-hardship');
+    expect(LAKELINE_DEMO_LINE).toContain(LAKELINE_PERSONA.email);
   });
 });
