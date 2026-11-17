@@ -83,14 +83,19 @@ export function matchScenarioCategory(
   return undefined;
 }
 
+/** The limit error for a value longer than the field allows, so the form can show it while typing. */
+export function overLimitMessage(field: ScenarioField, value: string): string | undefined {
+  if (!field.maxLength || value.length <= field.maxLength) return undefined;
+  return field.messages?.maxLength ?? `Use ${field.maxLength.toLocaleString('en-US')} characters or fewer.`;
+}
+
 function messageFor(field: ScenarioField, value: string, categories: readonly string[]): string | undefined {
   if (!value) {
     if (!field.required) return undefined;
     return field.messages?.required ?? `Enter ${field.label.toLowerCase()}.`;
   }
-  if (field.maxLength && value.length > field.maxLength) {
-    return field.messages?.maxLength ?? `Use ${field.maxLength.toLocaleString('en-US')} characters or fewer.`;
-  }
+  const limit = overLimitMessage(field, value);
+  if (limit) return limit;
   if (field.minLength && value.length < field.minLength) {
     return field.messages?.minLength ?? `Use at least ${field.minLength} characters.`;
   }
