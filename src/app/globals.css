@@ -1611,7 +1611,7 @@ textarea:focus {
 
 .case-row {
   display: grid;
-  grid-template-columns: 9rem minmax(8rem, 1.2fr) 7rem minmax(12rem, 1.4fr) 9.5rem;
+  grid-template-columns: 8.5rem minmax(7rem, 1.1fr) 6.5rem minmax(10rem, 1.3fr) 4.75rem 8.5rem;
   gap: 1rem;
   align-items: center;
   padding: 0.8rem 1.5rem;
@@ -1675,6 +1675,21 @@ a.case-row:focus-visible {
 .case-loan {
   font-family: var(--mono);
   font-size: 0.88rem;
+  color: var(--lk-ink-soft);
+}
+
+.case-outputs {
+  display: grid;
+  justify-items: start;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--lk-navy, #0b1f33);
+  line-height: 1.1;
+}
+
+.case-outputs small {
+  font-size: 0.72rem;
+  font-weight: 600;
   color: var(--lk-ink-soft);
 }
 
@@ -2052,7 +2067,188 @@ a.case-row:focus-visible {
 
 .timeline-action {
   font-weight: 700;
-  text-transform: capitalize;
+}
+
+.timeline-detail {
+  color: var(--lk-ink-soft);
+  font-size: 0.88rem;
+}
+
+.outputs-count {
+  min-width: 1.75rem;
+  height: 1.75rem;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--lk-mist);
+  color: var(--lk-brand-dark);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.output-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+
+.output-row {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--lk-line);
+}
+
+.output-row:first-child {
+  border-top: 0;
+  padding-top: 0.15rem;
+}
+
+.output-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--lk-mist);
+  color: var(--lk-brand-dark);
+}
+
+.output-icon[data-type='email_draft'] {
+  background: #eef2ff;
+  color: #3730a3;
+}
+
+.output-icon[data-type='pr'] {
+  background: #f5f3ff;
+  color: #6d28d9;
+}
+
+.output-icon[data-type='calendar'] {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.output-body {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.output-label {
+  font-weight: 700;
+  color: var(--lk-navy);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.output-label:hover {
+  text-decoration: underline;
+}
+
+.output-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.6rem;
+  font-size: 0.82rem;
+  color: var(--lk-ink-soft);
+}
+
+.artifact-status {
+  justify-self: end;
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  background: var(--ok-bg);
+  color: var(--ok);
+  white-space: nowrap;
+}
+
+.artifact-status[data-status='drafted'],
+.artifact-status[data-status='held'] {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.artifact-status[data-status='failed'] {
+  background: var(--bad-bg);
+  color: var(--bad);
+}
+
+.bot-pipeline {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.35rem;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+
+.bot-pipeline li {
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--lk-ink-soft);
+  padding-bottom: 0.4rem;
+  border-bottom: 3px solid var(--lk-line);
+}
+
+.bot-pipeline li[data-state='done'] {
+  color: var(--lk-brand-dark);
+  border-bottom-color: var(--lk-brand);
+}
+
+.bot-groups {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.bot-name {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.bot-name[data-bot='Intake'] {
+  color: var(--lk-brand-dark);
+}
+
+.bot-name[data-bot='Servicing'] {
+  color: #1d4ed8;
+}
+
+.bot-name[data-bot='Compliance'] {
+  color: #b45309;
+}
+
+.bot-name[data-bot='Escalation'] {
+  color: #b91c1c;
+}
+
+.bot-empty {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+@media (max-width: 720px) {
+  .output-row {
+    grid-template-columns: 2.25rem minmax(0, 1fr);
+  }
+
+  .artifact-status {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .bot-pipeline li {
+    font-size: 0.62rem;
+  }
 }
 
 .actions-card {
@@ -2245,10 +2441,22 @@ a.case-row:focus-visible {
   }
 
   .case-id {
-    grid-column: 1 / -1;
+    grid-column: 1;
     grid-row: 2;
     font-size: 0.82rem;
     color: var(--lk-ink-soft);
+  }
+
+  .case-outputs {
+    grid-column: 2;
+    grid-row: 2;
+    justify-items: end;
+    text-align: right;
+  }
+
+  .case-outputs small {
+    display: inline;
+    margin-left: 0.3rem;
   }
 
   .case-decision {

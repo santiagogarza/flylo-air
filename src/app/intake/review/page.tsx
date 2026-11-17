@@ -72,6 +72,7 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
                 <span>Customer</span>
                 <span>Loan</span>
                 <span>Recommendation</span>
+                <span>Outputs</span>
                 <span>Status</span>
               </div>
               <ul className="case-list">
@@ -86,6 +87,10 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
                           {decisionLabel(item.decision)}
                         </span>
                         <span className="case-band">{bandLabel(item.band)}</span>
+                      </span>
+                      <span className="case-outputs">
+                        {item.artifactCount}
+                        <small>{item.artifactCount === 1 ? 'output' : 'outputs'}</small>
                       </span>
                       <span className="status-chip" data-status={item.status}>
                         {statusLabel(item.status)}

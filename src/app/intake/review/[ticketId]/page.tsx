@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CaseActions } from '@/components/CaseActions';
+import { CaseOutputs, CaseTimeline } from '@/components/CaseWork';
 import { IntakeBrandBar } from '@/components/IntakeBrandBar';
 import { bandLabel, decisionLabel, formatWhen, statusLabel } from '@/lib/case-labels';
 import { intakeThemeStyle } from '@/lib/intake-theme';
@@ -100,6 +101,8 @@ export default async function CasePage({
             <blockquote className="request-quote">{item.request.reason || '—'}</blockquote>
           </section>
 
+          <CaseOutputs artifacts={item.artifacts} />
+
           <section className="card why-panel" aria-labelledby="case-decision">
             <div className="card-head">
               <h2 id="case-decision">Decision</h2>
@@ -146,6 +149,7 @@ export default async function CasePage({
         </div>
 
         <aside className="case-side" aria-label="Case context">
+          <CaseTimeline activity={item.activity} />
           <section className="card" aria-labelledby="case-loan">
             <h2 id="case-loan">Loan on file</h2>
             {loan ? (
@@ -209,19 +213,23 @@ export default async function CasePage({
             </section>
           )}
 
-          <section className="card" aria-labelledby="case-activity">
-            <h2 id="case-activity">Activity</h2>
-            <ol className="timeline">
-              {item.log.map((entry, index) => (
-                <li key={`${entry.at}-${index}`}>
-                  <span className="timeline-action">{entry.action}</span>
-                  <span className="muted">
-                    {entry.by} · <time dateTime={entry.at}>{formatWhen(entry.at)}</time>
-                  </span>
-                </li>
-              ))}
-            </ol>
-          </section>
+          {item.log.some((entry) => entry.action !== 'seeded') && (
+            <section className="card" aria-labelledby="case-review-log">
+              <h2 id="case-review-log">Review log</h2>
+              <ol className="timeline">
+                {item.log
+                  .filter((entry) => entry.action !== 'seeded')
+                  .map((entry, index) => (
+                    <li key={`${entry.at}-${index}`}>
+                      <span className="timeline-action">{entry.action}</span>
+                      <span className="muted">
+                        {entry.by} · <time dateTime={entry.at}>{formatWhen(entry.at)}</time>
+                      </span>
+                    </li>
+                  ))}
+              </ol>
+            </section>
+          )}
         </aside>
       </div>
     </div>
