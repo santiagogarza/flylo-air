@@ -12,13 +12,17 @@ One Next.js app (pages and API routes together) that deploys to Vercel as a sing
 | `/support/` | "Call FlyLo-Air Support": a browser voice call that fills in the ticket form, then the caller presses Submit. This is the `flylo-support` scenario. The page and the webhook payload are unchanged. |
 | `/intake?scenario=<id>` | The same form, skinned from `src/scenarios/<id>.ts` |
 | `/intake/pay?scenario=lakeline-hardship` | Sample Lakeline payment portal. No card is charged. |
+| `/intake/review?scenario=<id>` | Human review queue. Seeded for Lakeline. |
+| `/intake/policy?scenario=<id>` | The scenario policy, when the config names one. |
 
 | API route | What it does |
 | --- | --- |
 | `POST /api/checkout` | Validates the order and card, takes the (sample) payment and returns a booking reference |
 | `POST /api/tickets` | Validates a support ticket, gives it an id (`FLY-SUP-1001`, `FLY-SUP-1002`, …) and forwards it to the support webhook |
 | `POST /api/voice/session` | Mints a short-lived xAI realtime client secret for the call |
-| `POST /api/reset` | Clears the server's ticket list (needs `DEMO_RESET_KEY`) |
+| `POST /api/cases` | Ingests a review case. Needs `CASES_INGEST_KEY`, or `DEMO_RESET_KEY` when that override is unset. |
+| `POST /api/cases/<ticketId>` | Mock Send, Edit & send, Escalate, Reject, or Request changes. Does not email. |
+| `POST /api/reset` | Clears tickets and reloads sample cases (needs `DEMO_RESET_KEY`) |
 
 ## Run it
 
@@ -46,7 +50,8 @@ All of these are **server-only**. Never prefix them with `NEXT_PUBLIC_`, and nev
 | `SUPPORT_WEBHOOK_KEY` | Value sent in that header. Also the fallback key. |
 | `LAKELINE_WEBHOOK_URL` | Optional. Lakeline tickets POST here when this is set. |
 | `LAKELINE_WEBHOOK_KEY` | Optional. Lakeline sender key. When unset, `SUPPORT_WEBHOOK_KEY` is used. |
-| `DEMO_RESET_KEY` | Protects `POST /api/reset` (sent as `x-demo-reset-key`). |
+| `DEMO_RESET_KEY` | Protects `POST /api/reset` (sent as `x-demo-reset-key`). Also authorizes `POST /api/cases` when `CASES_INGEST_KEY` is unset. |
+| `CASES_INGEST_KEY` | Optional. When set, case ingest uses this key instead of `DEMO_RESET_KEY`. |
 | `ALLOWED_ORIGINS` | Optional, comma separated. Same-origin and localhost are always allowed. |
 
 On Vercel: `vercel env add XAI_API_KEY production` (and the same for each name), then `vercel --prod`.
@@ -135,7 +140,7 @@ Open the form at `/intake?scenario=<id>`. An unknown id shows the list of scenar
 
 ### Reset
 
-`POST /api/reset` with header `x-demo-reset-key: $DEMO_RESET_KEY` clears the in-memory ticket list and restarts every prefix at 1001 (`FLY-SUP-1001`, `LAF-REQ-1001`, …). Reloading the form, or pressing **Start a new request**, only clears the browser. It does not call the reset API.
+`POST /api/reset` with header `x-demo-reset-key: $DEMO_RESET_KEY` clears the in-memory ticket list and restarts every prefix at 1001 (`FLY-SUP-1001`, `LAF-REQ-1001`, …). It also clears reviewer actions on cases and reloads the sample queue from `loans.json`. The response is `{ ok: true, cleared, casesCleared }`. Reloading the form, or pressing **Start a new request**, only clears the browser. It does not call the reset API.
 
 ```bash
 DEMO_URL=https://<your-deployment> DEMO_RESET_KEY=<key> npm run reset-demo
@@ -173,4 +178,33 @@ Demo line: *"Hi, I'm Maya Chen, loan LAF-20417, maya.chen@example.com. I had a m
 
 `/intake/pay?scenario=lakeline-hardship` accepts a loan number and a normal amount and shows a confirmation. It does not charge a card. Callers who say the payment portal failed are talking about this page.
 
-Reference copies of the mock loans and the hardship policy (the app does not apply them) are in `src/scenarios/lakeline/`.
+Reference copies of the mock loans and the hardship policy are in `src/scenarios/lakeline/`. The intake form still does not decide eligibility. The review desk does, from those two files.
+
+### Review queue
+
+`/intake/review?scenario=lakeline-hardship` lists seeded cases. Compliance stops come first, then other escalations, then payment plans, then approvals. `/intake/review/<ticketId>` shows the request, the loan on file, a Why panel (each rule links to `/intake/policy?scenario=lakeline-hardship#s1` through `#s6`), disclosures, and a draft reply.
+
+**Send, Edit & send, Escalate, Reject, and Request changes are mock.** They write a name and a time onto the in-memory case. They do not email, text, or call a webhook. Sending twice returns the current status and does not add another log line. Editing the draft and then sending stores the new text.
+
+`POST /api/cases` ingests a case. Auth is `Authorization: Bearer <key>` or the `x-demo-reset-key` header. The key is `CASES_INGEST_KEY` when that variable is set, otherwise `DEMO_RESET_KEY`. A missing or wrong key returns 401 with `Unauthorized. Send Authorization: Bearer <key>, or the x-demo-reset-key header.` If neither variable is set, the response is 503: `Case ingest is not configured. Set CASES_INGEST_KEY or DEMO_RESET_KEY.` A bad body returns 400 and names the field, for example `ticketId is required.` or `request.loanNumber is required.`
+
+Lakeline cases are evaluated from `hardship-policy.md` and `loans.json`. Other scenarios have no evaluator, so `decision` and `rules` are required.
+
+```json
+{
+  "ticketId": "LAF-REQ-2001",
+  "scenario": "lakeline-hardship",
+  "request": {
+    "fullName": "Maya Chen",
+    "loanNumber": "LAF-20417",
+    "email": "maya.chen@example.com",
+    "reason": "I had a medical bill this month and need to push my payment back a few weeks.",
+    "requestedChange": "Payment extension",
+    "callbackWindow": "Afternoons"
+  },
+  "history": { "priorTickets": [] },
+  "draft": "Optional. If omitted, the desk writes a draft that includes the required disclosures."
+}
+```
+
+Cases live in memory, same as tickets. Reset reloads the eleven sample cases.

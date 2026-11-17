@@ -145,7 +145,7 @@ describe('POST /api/reset', () => {
 
     const response = handleReset(post('/api/reset', {}, { 'x-demo-reset-key': 'reset-me' }), ctx);
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ ok: true, cleared: 2 });
+    expect(await response.json()).toMatchObject({ ok: true, cleared: 2 });
     expect(ticketCount()).toBe(0);
     expect((await (await handleCreateTicket(post('/api/tickets', ticket), ctx)).json()).id).toBe('FLY-SUP-1001');
   });

@@ -1,3 +1,4 @@
+import { resetCases } from './cases';
 import { json, safeEqual, type ServerContext } from './http';
 import { resetTickets } from './tickets';
 
@@ -7,6 +8,7 @@ export function handleReset(request: Request, ctx: ServerContext): Response {
   const provided = request.headers.get('x-demo-reset-key') ?? '';
   if (!safeEqual(provided, expected)) return json(401, { ok: false, error: 'Unauthorized.' });
   const { cleared } = resetTickets();
-  ctx.log('demo reset', cleared);
-  return json(200, { ok: true, cleared });
+  const { cleared: casesCleared } = resetCases();
+  ctx.log('demo reset', cleared, casesCleared);
+  return json(200, { ok: true, cleared, casesCleared });
 }
