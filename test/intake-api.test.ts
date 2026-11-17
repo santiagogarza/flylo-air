@@ -34,8 +34,8 @@ function webhook(status = 200) {
   return vi.fn(async (_url: string | URL | Request, _init?: RequestInit) => new Response('{}', { status }));
 }
 
-beforeEach(() => {
-  resetTickets();
+beforeEach(async () => {
+  await resetTickets();
 });
 
 describe('POST /api/tickets scenario payloads', () => {

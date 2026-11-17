@@ -11,6 +11,7 @@ import {
   type PriorityBand,
 } from '@/lib/hardship-policy';
 import { normalizeLoanNumber } from '@/scenarios/normalizers';
+import { currentBag } from './demo-store';
 import { asString } from './http';
 
 export type CaseStatus = 'needs_review' | 'sent' | 'edited_sent' | 'escalated' | 'rejected' | 'changes_requested';
@@ -39,35 +40,52 @@ type RawLoan = LoanRecord & { borrower: string; email: string; demoPath: string 
 const LOANS = (loansFile as { loans: RawLoan[] }).loans;
 const SEED_AT = '2026-11-16T15:00:00.000Z';
 
-const state: { ready: boolean; cases: ReviewCase[] } = { ready: false, cases: [] };
+type CaseFile = { cases: ReviewCase[] };
 
-export function listCases(scenario: string, status?: string): ReviewCase[] {
-  ensure();
-  return state.cases
+async function loadCases(): Promise<ReviewCase[]> {
+  const stored = await (await currentBag()).read('cases');
+  if (stored && typeof stored === 'object' && Array.isArray((stored as CaseFile).cases)) return (stored as CaseFile).cases;
+  const seeded = seedCases();
+  await saveCases(seeded);
+  return seeded;
+}
+
+async function saveCases(cases: ReviewCase[]): Promise<void> {
+  await (await currentBag()).write('cases', { cases });
+}
+
+export async function listCases(scenario: string, status?: string): Promise<ReviewCase[]> {
+  const cases = await loadCases();
+  return cases
     .filter((item) => item.scenario === scenario && (!status || item.status === status))
     .map(clone)
     .sort((a, b) => priorityRank(a.band) - priorityRank(b.band) || a.ticketId.localeCompare(b.ticketId));
 }
 
-export function getCase(ticketId: string): ReviewCase | undefined {
-  ensure();
-  const found = state.cases.find((item) => item.ticketId === ticketId);
+export async function getCase(ticketId: string): Promise<ReviewCase | undefined> {
+  const cases = await loadCases();
+  const found = cases.find((item) => item.ticketId === ticketId);
   return found ? clone(found) : undefined;
 }
 
-export function resetCases(): { cleared: number; seeded: number } {
-  const cleared = state.ready ? state.cases.length : 0;
-  state.cases = seedCases();
-  state.ready = true;
-  return { cleared, seeded: state.cases.length };
+export async function resetCases(options?: { empty?: boolean }): Promise<{ cleared: number; seeded: number }> {
+  const stored = await (await currentBag()).read('cases');
+  const cleared = stored && typeof stored === 'object' && Array.isArray((stored as CaseFile).cases) ? (stored as CaseFile).cases.length : 0;
+  if (options?.empty) {
+    await saveCases([]);
+    return { cleared, seeded: 0 };
+  }
+  const seeded = seedCases();
+  await saveCases(seeded);
+  return { cleared, seeded: seeded.length };
 }
 
-export function ingestCase(raw: Record<string, unknown>): { status: number; body: Record<string, unknown> } {
-  ensure();
+export async function ingestCase(raw: Record<string, unknown>): Promise<{ status: number; body: Record<string, unknown> }> {
   const parsed = parseIngest(raw);
   if ('error' in parsed) return { status: 400, body: { ok: false, error: parsed.error } };
 
-  const existing = state.cases.find((item) => item.ticketId === parsed.value.ticketId);
+  const cases = await loadCases();
+  const existing = cases.find((item) => item.ticketId === parsed.value.ticketId);
   if (existing && existing.status !== 'needs_review') {
     return {
       status: 200,
@@ -78,23 +96,25 @@ export function ingestCase(raw: Record<string, unknown>): { status: number; body
   const next = buildStored(parsed.value, existing?.log ?? []);
   if (existing) {
     Object.assign(existing, next, { log: [...existing.log, { at: new Date().toISOString(), action: 'updated', by: 'ingest' }] });
+    await saveCases(cases);
     return { status: 200, body: { ok: true, ticketId: existing.ticketId, status: existing.status, emailed: false } };
   }
-  state.cases.push(next);
+  cases.push(next);
+  await saveCases(cases);
   return { status: 201, body: { ok: true, ticketId: next.ticketId, status: next.status, emailed: false } };
 }
 
 /**
- * MOCK ONLY. Records a reviewer and a time on the in-memory case.
+ * MOCK ONLY. Records a reviewer and a time on the demo store.
  * Does not email, text, or call a webhook.
  */
-export function applyCaseAction(
+export async function applyCaseAction(
   ticketId: string,
   action: string,
   input: { by?: string; draft?: string },
-): { status: number; body: Record<string, unknown> } {
-  ensure();
-  const item = state.cases.find((entry) => entry.ticketId === ticketId);
+): Promise<{ status: number; body: Record<string, unknown> }> {
+  const cases = await loadCases();
+  const item = cases.find((entry) => entry.ticketId === ticketId);
   if (!item) return { status: 404, body: { ok: false, error: `No case ${ticketId}.` } };
   const by = (input.by ?? '').trim();
   if (!by) return { status: 400, body: { ok: false, error: 'by is required. It is the reviewer name written on the log.' } };
@@ -104,19 +124,33 @@ export function applyCaseAction(
     return { status: 409, body: { ok: false, error: `This case is ${label} and cannot be sent.`, status: item.status, emailed: false } };
   }
 
-  if (action === 'send') return mark(item, 'sent', by, ['sent', 'edited_sent']);
-  if (action === 'edit_send') {
+  let result: { status: number; body: Record<string, unknown> };
+  let dirty = false;
+  if (action === 'send') {
+    result = mark(item, 'sent', by, ['sent', 'edited_sent']);
+    dirty = result.body.idempotent !== true;
+  } else if (action === 'edit_send') {
     const draft = (input.draft ?? '').trim();
     if (!draft) return { status: 400, body: { ok: false, error: 'draft is required when editing.' } };
     if (item.status === 'edited_sent' && item.draft === draft) return already(item);
     item.draft = draft;
     item.compliance = complianceFor(item.decision, draft, ['Reviewer edited the draft before sending.']);
-    return mark(item, 'edited_sent', by, []);
+    result = mark(item, 'edited_sent', by, []);
+    dirty = true;
+  } else if (action === 'escalate') {
+    result = mark(item, 'escalated', by, ['escalated']);
+    dirty = result.body.idempotent !== true;
+  } else if (action === 'reject') {
+    result = mark(item, 'rejected', by, ['rejected']);
+    dirty = result.body.idempotent !== true;
+  } else if (action === 'request_changes') {
+    result = mark(item, 'changes_requested', by, ['changes_requested']);
+    dirty = result.body.idempotent !== true;
+  } else {
+    return { status: 400, body: { ok: false, error: 'action must be send, edit_send, escalate, reject, or request_changes.' } };
   }
-  if (action === 'escalate') return mark(item, 'escalated', by, ['escalated']);
-  if (action === 'reject') return mark(item, 'rejected', by, ['rejected']);
-  if (action === 'request_changes') return mark(item, 'changes_requested', by, ['changes_requested']);
-  return { status: 400, body: { ok: false, error: 'action must be send, edit_send, escalate, reject, or request_changes.' } };
+  if (dirty) await saveCases(cases);
+  return result;
 }
 
 function mark(item: ReviewCase, status: CaseStatus, by: string, alreadyStatuses: CaseStatus[]): { status: number; body: Record<string, unknown> } {
@@ -129,12 +163,6 @@ function mark(item: ReviewCase, status: CaseStatus, by: string, alreadyStatuses:
 
 function already(item: ReviewCase): { status: number; body: Record<string, unknown> } {
   return { status: 200, body: { ok: true, ticketId: item.ticketId, status: item.status, idempotent: true, emailed: false } };
-}
-
-function ensure() {
-  if (state.ready) return;
-  state.cases = seedCases();
-  state.ready = true;
 }
 
 function seedCases(): ReviewCase[] {
