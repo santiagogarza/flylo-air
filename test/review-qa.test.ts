@@ -36,13 +36,8 @@ function actRequest(ticketId: string, body: unknown) {
   return [post(`/api/cases/${ticketId}`, body), { params: Promise.resolve({ ticketId }) }] as const;
 }
 
-// Cases the policy engine is known to decide differently from the written policy; each was reported to the feature owner.
-const KNOWN_POLICY_GAPS = new Set([
-  // "dejen de llamarme" (stop calling me) is not recognized as a cease-contact request.
-  'spanish-cease-contact',
-  // "That record is wrong" disputes a payment record without the word "dispute", so it escalates outside compliance.
-  'words-dispute-on-hannah',
-]);
+// "That record is wrong" disputes a payment record without the word "dispute", so the engine escalates it outside compliance.
+const KNOWN_POLICY_GAPS = new Set(['words-dispute-on-hannah']);
 
 describe('policy engine agrees with the synthetic case expectations', () => {
   const certain = VALID_CASES.filter((item) => item.expect.decisionCertain && item.expect.decision !== 'ROUTE_PORTAL_BUG');
@@ -71,13 +66,13 @@ describe('policy engine agrees with the synthetic case expectations', () => {
     }
   });
 
-  it.fails('due-date draft uses the new day, not the old one ("from the 1st to the 16th")', () => {
+  it('due-date draft uses the new day, not the old one ("from the 1st to the 16th")', () => {
     const fields = cleanScenarioFields(scenario, { ...caseById('demo-approve-due-date').input });
     const evaluation = evaluateHardship(loanFor(fields.loanNumber), fields);
     expect(draftReply(fields, evaluation)).toContain('to the 16');
   });
 
-  it.fails('"deceased" is not read as a cease-contact request', () => {
+  it('"deceased" is not read as a cease-contact request', () => {
     const evaluation = evaluateHardship(loanFor('LAF-20417'), {
       reason: 'My husband is deceased and I need to push this payment back a month.',
       requestedChange: 'Payment extension',
@@ -146,7 +141,7 @@ describe('POST /api/cases ingest (QA)', () => {
     expect(listCases('lakeline-hardship').length).toBe(11 + VALID_CASES.length);
   });
 
-  it.fails('normalizes a raw loan number on ingest ("laf 20417")', async () => {
+  it('normalizes a raw loan number on ingest ("laf 20417")', async () => {
     const response = await ingest(
       ingestRequest({ ticketId: 'QA-6001', scenario: 'lakeline-hardship', request: { ...caseById('demo-approve-extension').input, loanNumber: 'laf 20417' } }),
     );
@@ -155,7 +150,7 @@ describe('POST /api/cases ingest (QA)', () => {
     expect(stored.history.loan?.loanNumber, 'loan record should be found after normalization').toBe('LAF-20417');
   });
 
-  it.fails('a live intake ticket id does not collide with a seeded sample case', async () => {
+  it('a live intake ticket id does not collide with a seeded sample case', async () => {
     const seededIds = listCases('lakeline-hardship').map((item) => item.ticketId);
     expect(seededIds, 'seeded ids overlap the LAF-REQ-1001.. ids /api/tickets hands out').not.toContain('LAF-REQ-1001');
   });
@@ -193,14 +188,14 @@ describe('case actions (QA)', () => {
     expect((await act(crossSite, { params: Promise.resolve({ ticketId: id }) })).status).toBe(403);
   });
 
-  it.fails('a rejected case cannot then be sent', async () => {
+  it('a rejected case cannot then be sent', async () => {
     const id = first();
     await act(...actRequest(id, { action: 'reject', by: 'QA' }));
     await act(...actRequest(id, { action: 'send', by: 'QA' }));
     expect(getCase(id)!.status, 'send after reject should not flip the case to sent').toBe('rejected');
   });
 
-  it.fails('an escalated case cannot then be sent', async () => {
+  it('an escalated case cannot then be sent', async () => {
     const id = first();
     await act(...actRequest(id, { action: 'escalate', by: 'QA' }));
     await act(...actRequest(id, { action: 'send', by: 'QA' }));
