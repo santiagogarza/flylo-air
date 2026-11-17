@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { SendIcon } from '@/components/icons';
 
 export function CaseActions({ ticketId, draft, status }: { ticketId: string; draft: string; status: string }) {
   const router = useRouter();
   const [text, setText] = useState(draft);
   const [name, setName] = useState('');
   const [message, setMessage] = useState('');
+  const [failed, setFailed] = useState(false);
   const [pending, setPending] = useState(false);
 
   useEffect(() => {
@@ -25,6 +27,7 @@ export function CaseActions({ ticketId, draft, status }: { ticketId: string; dra
     if (pending) return;
     setPending(true);
     setMessage('');
+    setFailed(false);
     window.sessionStorage.setItem('intake-reviewer', name);
     try {
       const response = await fetch(`/api/cases/${encodeURIComponent(ticketId)}`, {
@@ -34,12 +37,14 @@ export function CaseActions({ ticketId, draft, status }: { ticketId: string; dra
       });
       const body = (await response.json().catch(() => ({}))) as { error?: string; idempotent?: boolean };
       if (!response.ok) {
+        setFailed(true);
         setMessage(body.error || 'The case was not updated.');
         return;
       }
       setMessage(body.idempotent ? 'Already recorded. Nothing was emailed.' : 'Recorded in the demo queue. Nothing was emailed.');
       router.refresh();
     } catch {
+      setFailed(true);
       setMessage('The case was not updated. Try again.');
     } finally {
       setPending(false);
@@ -47,30 +52,43 @@ export function CaseActions({ ticketId, draft, status }: { ticketId: string; dra
   }
 
   return (
-    <section className="card" aria-labelledby="case-actions">
-      <h2 id="case-actions">Actions</h2>
-      <p className="hint">Send only marks this case in the demo queue. It does not email the customer.</p>
+    <section className="card actions-card" aria-labelledby="case-actions" aria-busy={pending || undefined}>
+      <div className="card-head">
+        <h2 id="case-actions">Actions</h2>
+        <span className="status-chip" data-status={status}>
+          Current status: {status.replaceAll('_', ' ')}
+        </span>
+      </div>
+      <p className="mock-note">Send only marks this case in the demo queue. It does not email the customer.</p>
       <div className="field">
         <label htmlFor="reviewer-name">Your name</label>
         <input id="reviewer-name" value={name} autoComplete="name" onChange={(event) => setName(event.target.value)} />
       </div>
       <div className="field">
-        <label htmlFor="case-draft">Draft reply</label>
-        <textarea id="case-draft" rows={8} value={text} onChange={(event) => setText(event.target.value)} />
+        <label htmlFor="case-draft">
+          Draft reply
+          {dirty && <span className="edited-tag">Edited</span>}
+        </label>
+        <textarea id="case-draft" rows={8} value={text} aria-describedby="case-draft-hint" onChange={(event) => setText(event.target.value)} />
+        <p className="hint" id="case-draft-hint">
+          Edit the text to send your version. Send becomes Edit &amp; send.
+        </p>
       </div>
-      <p className="hint">Current status: {status.replaceAll('_', ' ')}</p>
-      {message && <p role="status">{message}</p>}
-      <div className="inline-actions" style={{ justifyContent: 'flex-start' }}>
+      <div role="status" className="actions-status">
+        {message && <p className={`alert ${failed ? 'alert-error' : 'alert-success'}`}>{message}</p>}
+      </div>
+      <div className="case-buttons">
         <button type="button" className="btn" disabled={pending} onClick={() => act(dirty ? 'edit_send' : 'send')}>
+          <SendIcon className="btn-icon" />
           {dirty ? 'Edit & send' : 'Send'}
         </button>
         <button type="button" className="btn btn-ghost" disabled={pending} onClick={() => act('escalate')}>
           Escalate
         </button>
-        <button type="button" className="btn btn-ghost" disabled={pending} onClick={() => act('reject')}>
+        <button type="button" className="btn btn-ghost btn-reject" disabled={pending} onClick={() => act('reject')}>
           Reject
         </button>
-        <button type="button" className="btn btn-ghost" disabled={pending} onClick={() => act('request_changes')}>
+        <button type="button" className="btn btn-ghost btn-quiet" disabled={pending} onClick={() => act('request_changes')}>
           Request changes
         </button>
       </div>
