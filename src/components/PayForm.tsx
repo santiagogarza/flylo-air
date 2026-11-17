@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { CheckIcon, LockIcon } from '@/components/icons';
 import { getScenario } from '@/scenarios';
 import { interpretFieldInput } from '@/scenarios/validate';
 
@@ -14,6 +15,11 @@ export function PayForm({ scenarioId }: { scenarioId: string }) {
   const [amount, setAmount] = useState('');
   const [errors, setErrors] = useState<{ loan?: string; amount?: string }>({});
   const [receipt, setReceipt] = useState<{ loan: string; amount: string } | null>(null);
+  const receivedRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    if (receipt) receivedRef.current?.focus();
+  }, [receipt]);
 
   if (!scenario?.paymentPortal || !loanField) {
     return (
@@ -27,11 +33,16 @@ export function PayForm({ scenarioId }: { scenarioId: string }) {
   if (receipt) {
     return (
       <section className="card success" aria-labelledby="pay-received">
+        <div className="success-icon">
+          <CheckIcon className="btn-icon" />
+        </div>
         <p className="eyebrow">Sample payment</p>
-        <h2 id="pay-received">Payment recorded</h2>
+        <h2 id="pay-received" ref={receivedRef} tabIndex={-1}>
+          Payment recorded
+        </h2>
         <p className="ref">{receipt.amount}</p>
         <p>Loan {receipt.loan}</p>
-        <p>No charge was made. This portal only confirms the amount.</p>
+        <p className="muted">No charge was made. This portal only confirms the amount.</p>
         <div className="inline-actions">
           <button type="button" className="btn" onClick={() => setReceipt(null)}>
             Make another payment
@@ -121,10 +132,12 @@ export function PayForm({ scenarioId }: { scenarioId: string }) {
           </div>
         </div>
         <div className="action-bar">
-          <button className="btn btn-lg" type="submit">
+          <button className="btn btn-lg btn-primary-action" type="submit">
             Pay
           </button>
-          <p className="action-note">No card is charged.</p>
+          <p className="action-note">
+            <LockIcon className="btn-icon" /> No card is charged.
+          </p>
         </div>
       </form>
     </section>

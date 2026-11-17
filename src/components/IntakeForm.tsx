@@ -15,7 +15,14 @@ import {
 } from '@/lib/support';
 import { createVoiceCall, type CallState, type TranscriptLine, type VoiceCall, type VoiceField } from '@/lib/voice-call';
 import type { ScenarioConfig, ScenarioField } from '@/scenarios/types';
-import { cleanScenarioFields, interpretFieldInput, matchScenarioCategory, normalizeField, validateScenario } from '@/scenarios/validate';
+import {
+  cleanScenarioFields,
+  interpretFieldInput,
+  matchScenarioCategory,
+  normalizeField,
+  overLimitMessage,
+  validateScenario,
+} from '@/scenarios/validate';
 
 const HIGHLIGHT_MS = 1600;
 const PRIMARY_SETTLE_MS = 600;
@@ -175,6 +182,10 @@ function IntakeSession({ scenario, onRestart }: { scenario: ScenarioConfig; onRe
     primaryChangedAt.current = Date.now();
   }, [primary]);
 
+  useEffect(() => {
+    if (phase === 'received') receivedRef.current?.focus();
+  }, [phase]);
+
   const startCall = () => {
     usedVoice.current = true;
     setSummary([]);
@@ -189,6 +200,11 @@ function IntakeSession({ scenario, onRestart }: { scenario: ScenarioConfig; onRe
     } else {
       const normalized = normalizeField(field, raw);
       writeField(field.key, field.pattern && patternOk(field.pattern, normalized) ? normalized : raw);
+      const limit = overLimitMessage(field, normalized);
+      if (limit) {
+        setErrors((current) => ({ ...current, [field.key]: limit }));
+        return;
+      }
     }
     if (errors[field.key]) setErrors((current) => ({ ...current, [field.key]: undefined }));
   };
@@ -251,7 +267,6 @@ function IntakeSession({ scenario, onRestart }: { scenario: ScenarioConfig; onRe
         sent = true;
         setTicketId(payload.id);
         setPhase('received');
-        window.setTimeout(() => receivedRef.current?.focus(), 0);
         return;
       }
       throw new Error(payload.status || 'failed');
@@ -273,7 +288,7 @@ function IntakeSession({ scenario, onRestart }: { scenario: ScenarioConfig; onRe
           <CheckIcon className="btn-icon" />
         </div>
         <p className="eyebrow">{ui.successEyebrow}</p>
-        <h2 id={ui.receivedId} tabIndex={-1} style={{ fontSize: '1.8rem' }}>
+        <h2 id={ui.receivedId} ref={receivedRef} tabIndex={-1} style={{ fontSize: '1.8rem' }}>
           {ui.successTitle}
         </h2>
         <p className="muted">{ui.successHint}</p>
@@ -449,7 +464,11 @@ function FieldControl({
   onBlur: () => void;
 }) {
   const id = `${scenario.ui.fieldIdPrefix}-${field.key}`;
-  const describedBy = [field.hint ? `${id}-hint` : '', error ? `${id}-error` : ''].filter(Boolean).join(' ') || undefined;
+  // A maxlength attribute would silently cut pasted text, so scenario forms show a counter and a limit error instead.
+  const showCount = !scenario.legacyPayload && !!field.maxLength && (field.type === 'textarea' || value.length > field.maxLength * 0.8);
+  const over = !!field.maxLength && value.length > field.maxLength;
+  const describedBy =
+    [field.hint ? `${id}-hint` : '', showCount ? `${id}-count` : '', error ? `${id}-error` : ''].filter(Boolean).join(' ') || undefined;
   const classes = ['field', field.full ? 'full' : '', filled ? 'is-filled' : '', justFilled ? 'is-just-filled' : '', error ? 'is-invalid' : '']
     .filter(Boolean)
     .join(' ');
@@ -463,7 +482,7 @@ function FieldControl({
     'aria-required': field.required || undefined,
     'aria-invalid': error ? true : undefined,
     'aria-describedby': describedBy,
-    maxLength: field.maxLength,
+    maxLength: scenario.legacyPayload ? field.maxLength : undefined,
     placeholder: field.placeholder,
     autoComplete: field.input?.autoComplete,
     spellCheck: field.input?.spellCheck,
@@ -493,6 +512,12 @@ function FieldControl({
       {field.hint && (
         <p className="hint" id={`${id}-hint`}>
           {field.hint}
+        </p>
+      )}
+      {showCount && field.maxLength && (
+        <p className={`char-count${over ? ' is-over' : ''}`} id={`${id}-count`}>
+          {value.length.toLocaleString('en-US')} / {field.maxLength.toLocaleString('en-US')} characters
+          {over && ` (${(value.length - field.maxLength).toLocaleString('en-US')} over)`}
         </p>
       )}
       {error && (
