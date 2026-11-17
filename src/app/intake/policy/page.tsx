@@ -13,7 +13,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
   const id = param(await searchParams, 'scenario')?.trim() ?? '';
   const scenario = id ? getScenario(id) : undefined;
   if (!scenario) return absoluteTitle(id ? 'Scenario not found' : 'Hardship policy');
-  return scenarioTitle('Hardship policy', scenario.brandName);
+  return scenarioTitle('Hardship policy', scenario);
 }
 
 export default async function PolicyPage({ searchParams }: { searchParams: Promise<SearchParams> }) {

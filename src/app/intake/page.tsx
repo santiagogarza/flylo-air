@@ -10,7 +10,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
   const id = param(await searchParams, 'scenario')?.trim() ?? '';
   const scenario = id ? getScenario(id) : undefined;
   if (!scenario) return absoluteTitle(id ? 'Scenario not found' : 'Intake');
-  return scenarioTitle(scenario.title, scenario.brandName);
+  return scenarioTitle(scenario.title, scenario);
 }
 
 export default async function IntakePage({ searchParams }: { searchParams: Promise<SearchParams> }) {

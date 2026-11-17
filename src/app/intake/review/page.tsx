@@ -13,7 +13,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
   const id = param(await searchParams, 'scenario')?.trim() ?? '';
   const scenario = id ? getScenario(id) : undefined;
   if (!scenario) return absoluteTitle(id ? 'Scenario not found' : 'Review queue');
-  return scenarioTitle('Review queue', scenario.brandName);
+  return scenarioTitle('Review queue', scenario);
 }
 
 const STATUSES: { id: '' | CaseStatus; label: string }[] = [
