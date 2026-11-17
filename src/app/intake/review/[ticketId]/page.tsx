@@ -24,7 +24,10 @@ export async function generateMetadata({
   const requested = param(await searchParams, 'scenario')?.trim() ?? '';
   if (requested && !getScenario(requested)) return absoluteTitle('Case not found');
   const scenario = getScenario(requested || 'lakeline-hardship');
-  return scenario ? scenarioTitle(id, scenario) : absoluteTitle(id);
+  if (!scenario) return absoluteTitle(id);
+  const meta = scenarioTitle(id, scenario);
+  if (await getCase(id)) return meta;
+  return { ...meta, title: { absolute: `Case not found · ${scenario.brandName}` } };
 }
 
 export default async function CasePage({

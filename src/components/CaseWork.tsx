@@ -28,7 +28,7 @@ export function CaseOutputs({ artifacts }: { artifacts: CaseArtifact[] }) {
         <h2 id="case-outputs">Outputs</h2>
         <span className="outputs-count">{artifactCount({ artifacts })}</span>
       </div>
-      <p className="mock-note">Work the bots produced for this case. Links are samples and nothing was emailed.</p>
+      <p className="mock-note">Created by the Lakeline bots. Nothing is emailed until a person sends it.</p>
       {ordered.length === 0 ? (
         <p className="muted">Nothing has been produced for this case.</p>
       ) : (
