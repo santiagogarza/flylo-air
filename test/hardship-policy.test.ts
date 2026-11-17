@@ -118,3 +118,37 @@ describe('hardship policy', () => {
     expect(headingId('§2. Extension eligibility')).toBe('s2');
   });
 });
+
+describe('dispute intent', () => {
+  const santi = () => {
+    const loan = loans.find((item) => item.demoPath === 'approve_extension');
+    if (!loan) throw new Error('missing Santi');
+    return loan;
+  };
+  const evaluate = (reason: string) => evaluateHardship(santi(), { fullName: santi().borrower, loanNumber: santi().loanNumber, email: santi().email, requestedChange: 'Payment extension', reason });
+
+  it.each([
+    'I dispute the late fee on this loan.',
+    'The late fee is wrong and I need an extension.',
+    'I do not owe this.',
+    'You charged me twice this month.',
+    'This is not my loan.',
+    'I never authorized that payment.',
+    'No debo ese cargo, el saldo es incorrecto.',
+    'Disputo el cobro de la cuota atrasada.',
+    'Me cobraron dos veces.',
+  ])('stops for a dispute claim: %s', (reason) => {
+    const evaluation = evaluate(reason);
+    expect(evaluation.decision).toBe('ESCALATE');
+    expect(evaluation.band).toBe('compliance');
+  });
+
+  it.each([
+    'I had a medical bill this month and need to push my payment back a few weeks.',
+    'My balance is high and I owe more than I expected.',
+    'I need more time to pay my bill.',
+    'Mi saldo es alto y necesito mas tiempo para pagar.',
+  ])('does not stop for ordinary hardship wording: %s', (reason) => {
+    expect(evaluate(reason).decision).toBe('APPROVE_EXTENSION');
+  });
+});
