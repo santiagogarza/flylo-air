@@ -1108,6 +1108,52 @@ textarea:focus {
   }
 }
 
+.intake-wordmark {
+  margin: 0 0 0.35rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  font-size: 1.05rem;
+}
+
+.intake-theme .page-head {
+  background: linear-gradient(160deg, var(--intake-navy, #0b1f33) 0%, color-mix(in srgb, var(--intake-brand, #0f766e) 55%, #0b1f33) 100%);
+}
+
+.intake-theme .page-head p,
+.intake-theme .page-head a {
+  color: #e7f6f4;
+}
+
+.intake-theme .page-head .eyebrow {
+  color: #99f6e4;
+}
+
+.intake-links {
+  margin-top: 0.75rem;
+}
+
+.demo-line {
+  color: var(--ink-soft);
+  max-width: 44rem;
+}
+
+.scenario-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.scenario-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--line);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
