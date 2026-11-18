@@ -1,4 +1,5 @@
 import { LAKELINE_PERSONA } from '@/scenarios/lakeline/persona';
+import { PUBLIC_PERSONA } from '@/scenarios/public-hotel/persona';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { clearDemoMemoryForTests } from '@/server/demo-store';
 import { handleCreateTicket, resetTickets } from '@/server/tickets';
@@ -145,6 +146,77 @@ describe('POST /api/tickets scenario payloads', () => {
       ).status,
     ).toBe(400);
     expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it('accepts a PUBLIC Hotel request in demo mode when PUBLIC_WEBHOOK_URL is unset', async () => {
+    const fetchImpl = webhook();
+    const response = await handleCreateTicket(
+      post('/api/tickets', {
+        scenario: 'public-hotel',
+        channel: 'web',
+        fields: {
+          guestName: PUBLIC_PERSONA.guestName,
+          email: ' Santi.Garza@Flylo-Air.com ',
+          confirmation: 'P U B four eight two nine one three',
+          checkIn: 'Thursday',
+          nights: 'two',
+          requestType: 'Early check-in / late checkout',
+          details: 'Late checkout on Saturday around 2pm, and a possible double minibar charge.',
+          callbackTime: 'Afternoons',
+        },
+      }),
+      context(env, fetchImpl as unknown as typeof fetch),
+    );
+    expect(response.status).toBe(201);
+    expect(await response.json()).toEqual({ ok: true, id: 'PUB-REQ-1001', status: 'received' });
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it('posts a PUBLIC Hotel request only to PUBLIC_WEBHOOK_URL', async () => {
+    const fetchImpl = webhook();
+    const response = await handleCreateTicket(
+      post('/api/tickets', {
+        scenario: 'public-hotel',
+        channel: 'voice',
+        fields: {
+          guestName: PUBLIC_PERSONA.guestName,
+          email: PUBLIC_PERSONA.email,
+          confirmation: 'P U B four eight two nine one three',
+          checkIn: 'Nov 20',
+          requestType: 'Billing question / charge dispute',
+          details: 'I think I was charged twice for the minibar on my last stay.',
+          callbackTime: 'Afternoons',
+        },
+      }),
+      context(
+        {
+          ...env,
+          PUBLIC_WEBHOOK_URL: 'https://hooks.example.test/public',
+          PUBLIC_WEBHOOK_KEY: 'public-key',
+          PUBLIC_WEBHOOK_HEADER: 'x-public-key',
+        },
+        fetchImpl as unknown as typeof fetch,
+      ),
+    );
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({ ok: true, id: 'PUB-REQ-1001', status: 'received' });
+    const [url, init] = fetchImpl.mock.calls[0];
+    expect(url).toBe('https://hooks.example.test/public');
+    expect(new Headers(init?.headers).get('x-public-key')).toBe('public-key');
+    const sent = JSON.parse(String(init?.body));
+    expect(sent.scenario).toBe('public-hotel');
+    expect(sent.fields).toMatchObject({
+      guestName: 'Santi Garza',
+      email: 'santi.garza@flylo-air.com',
+      confirmation: 'PUB-482913',
+      checkIn: 'Nov 20',
+      nights: '',
+      requestType: 'Billing question / charge dispute',
+    });
+    expect(sent.category).toBe('Billing question / charge dispute');
+    expect(sent.summary).toContain('Santi Garza (PUB-482913)');
+    expect(sent.description).toContain('minibar');
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 
   it('returns a retryable error and still reports the id when the webhook is not 2xx', async () => {

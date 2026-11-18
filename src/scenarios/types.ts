@@ -1,4 +1,4 @@
-export type NamedNormalizer = 'trim' | 'email' | 'booking' | 'loan';
+export type NamedNormalizer = 'trim' | 'email' | 'booking' | 'loan' | 'confirmation';
 
 /** A built-in normalizer name, or a function for a one-off scenario. */
 export type FieldNormalizer = NamedNormalizer | ((value: string) => string);
@@ -50,6 +50,11 @@ export type ScenarioWebhook = {
   keyEnv: string;
   /** Env var that holds the header name. Never a secret. */
   headerEnv: string;
+  /**
+   * When the URL env is unset, accept the ticket without calling out.
+   * Does not fall back to the support webhook.
+   */
+  demoWhenUnset?: boolean;
 };
 
 export type ScenarioVoice = {
@@ -97,7 +102,7 @@ export type ScenarioUi = {
   receivedId: string;
   showDemoLine?: boolean;
   portalLink?: { href: string; label: string };
-  successMessage: (fields: Record<string, string>) => string;
+  successMessage: (fields: Record<string, string>, ticketId?: string) => string;
 };
 
 export type PaymentPortal = {
@@ -112,6 +117,10 @@ export type ScenarioConfig = {
   brandColor: string;
   brandColorDark?: string;
   brandNavy?: string;
+  /** Black-and-white editorial chrome. Omit for the default intake theme. */
+  appearance?: 'editorial';
+  /** Brand-bar badge. Defaults to Sample. */
+  badge?: string;
   tagline?: string;
   pageEyebrow?: string;
   fields: ScenarioField[];

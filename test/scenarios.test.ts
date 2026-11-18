@@ -5,7 +5,9 @@ import { createSubmitGuard } from '@/lib/submit-guard';
 import { CALL_DROPPED_MESSAGE, GREETING, KEYTERMS, MIC_DENIED_MESSAGE, sessionConfig } from '@/lib/voice-call';
 import { getScenario, listScenarios } from '@/scenarios';
 import { LAKELINE_DEMO_LINE, LAKELINE_GREETING } from '@/scenarios/lakeline-hardship';
-import { normalizeLoanNumber } from '@/scenarios/normalizers';
+import { normalizeConfirmation, normalizeLoanNumber } from '@/scenarios/normalizers';
+import { PUBLIC_DEMO_LINE, PUBLIC_GREETING } from '@/scenarios/public-hotel';
+import { PUBLIC_PERSONA } from '@/scenarios/public-hotel/persona';
 import { interpretFieldInput, validateScenario } from '@/scenarios/validate';
 import { resolveWebhook } from '@/scenarios/webhook';
 
@@ -17,7 +19,7 @@ const supportEnv = {
 
 describe('scenario config', () => {
   it('loads the registered scenarios and rejects an unknown id', () => {
-    expect(listScenarios().map((scenario) => scenario.id).sort()).toEqual(['flylo-support', 'lakeline-hardship']);
+    expect(listScenarios().map((scenario) => scenario.id).sort()).toEqual(['flylo-support', 'lakeline-hardship', 'public-hotel']);
     expect(getScenario('lakeline-hardship')?.ticketPrefix).toBe('LAF-REQ-');
     expect(getScenario('flylo-support')?.legacyPayload).toBe(true);
     expect(getScenario('nope')).toBeUndefined();
@@ -48,6 +50,135 @@ describe('scenario config', () => {
       keyEnv: 'LAKELINE_WEBHOOK_KEY',
       headerEnv: 'SUPPORT_WEBHOOK_HEADER',
     });
+  });
+});
+
+describe('PUBLIC Hotel guest services', () => {
+  const scenario = () => getScenario('public-hotel')!;
+
+  it('registers the demo brand, voice line, and webhook env names', () => {
+    const hotel = scenario();
+    expect(hotel.brandName).toBe('PUBLIC Hotel New York');
+    expect(hotel.brandColor).toBe('#000000');
+    expect(hotel.appearance).toBe('editorial');
+    expect(hotel.ticketPrefix).toBe('PUB-REQ-');
+    expect(hotel.title).toBe('Guest services');
+    expect(hotel.voice.title).toBe('PUBLIC Guest Services');
+    expect(hotel.voice.greeting).toBe(PUBLIC_GREETING);
+    expect(hotel.voice.demoLine).toBe(PUBLIC_DEMO_LINE);
+    expect(PUBLIC_DEMO_LINE).toContain(PUBLIC_PERSONA.guestName);
+    expect(PUBLIC_DEMO_LINE).toContain(PUBLIC_PERSONA.email);
+    expect(PUBLIC_DEMO_LINE).toContain(PUBLIC_PERSONA.confirmation);
+    expect(hotel.voice.keyterms).toEqual([
+      'PUBLIC',
+      'PUB',
+      'Santi Garza',
+      'flylo-air.com',
+      'late checkout',
+      'Lower East Side',
+      'Chrystie Street',
+    ]);
+    expect(hotel.voice.instructions).toMatch(/spell the email/i);
+    expect(hotel.voice.instructions).toMatch(/confirmation number/i);
+    expect(hotel.voice.instructions).toMatch(/never promise a refund/i);
+    expect(hotel.voice.instructions).toMatch(/complimentary/i);
+    expect(hotel.voice.instructions).toMatch(/review the request and confirm/i);
+    expect(hotel.tagline).not.toMatch(/flylo/i);
+    expect(hotel.webhook).toEqual({
+      urlEnv: 'PUBLIC_WEBHOOK_URL',
+      keyEnv: 'PUBLIC_WEBHOOK_KEY',
+      headerEnv: 'PUBLIC_WEBHOOK_HEADER',
+      demoWhenUnset: true,
+    });
+    expect(hotel.categories).toEqual([
+      'Billing question / charge dispute',
+      'Change or extend my stay',
+      'Early check-in / late checkout',
+      'Room issue',
+      'Lost and found',
+      'Dining or event reservation',
+      'Other',
+    ]);
+  });
+
+  it('accepts the Santi Garza sample and leaves nights optional', () => {
+    const hotel = scenario();
+    expect(
+      validateScenario(hotel, {
+        guestName: PUBLIC_PERSONA.guestName,
+        email: ' Santi.Garza@Flylo-Air.com ',
+        confirmation: 'pub 482913',
+        checkIn: 'Nov 20',
+        nights: '',
+        requestType: 'Early check-in / late checkout',
+        details: 'Late checkout on Saturday around 2pm, and a minibar charge.',
+        callbackTime: 'Afternoons',
+      }),
+    ).toEqual({});
+    const short = validateScenario(hotel, {
+      guestName: PUBLIC_PERSONA.guestName,
+      email: PUBLIC_PERSONA.email,
+      confirmation: PUBLIC_PERSONA.confirmation,
+      checkIn: 'Thursday',
+      requestType: PUBLIC_PERSONA.requestType,
+      details: 'too short',
+      callbackTime: 'Afternoons',
+    });
+    expect(short.details).toMatch(/sentence or two/);
+    expect(short.nights).toBeUndefined();
+  });
+
+  it('does not use the support webhook when PUBLIC_WEBHOOK_URL is unset', () => {
+    const hook = scenario().webhook;
+    expect(resolveWebhook(hook, supportEnv)).toEqual({
+      url: undefined,
+      headerName: undefined,
+      key: undefined,
+      demoWhenUnset: true,
+    });
+    expect(
+      resolveWebhook(hook, {
+        ...supportEnv,
+        PUBLIC_WEBHOOK_URL: 'https://public.example/hook',
+        PUBLIC_WEBHOOK_KEY: 'pub-key',
+        PUBLIC_WEBHOOK_HEADER: 'x-public-key',
+      }),
+    ).toEqual({
+      url: 'https://public.example/hook',
+      headerName: 'x-public-key',
+      key: 'pub-key',
+      demoWhenUnset: true,
+    });
+  });
+});
+
+describe('confirmation number normalization', () => {
+  const confirmation = () => getScenario('public-hotel')!.fields.find((field) => field.key === 'confirmation')!;
+
+  it('normalizes spoken and typed forms to PUB-482913', () => {
+    expect(normalizeConfirmation('pub 482913')).toBe('PUB-482913');
+    expect(normalizeConfirmation('PUB482913')).toBe('PUB-482913');
+    expect(normalizeConfirmation('pub-482913')).toBe('PUB-482913');
+    expect(normalizeConfirmation('P.U.B. 482913')).toBe('PUB-482913');
+    expect(normalizeConfirmation('PUB–482913')).toBe('PUB-482913');
+    expect(normalizeConfirmation('P U B four eight two nine one three')).toBe('PUB-482913');
+    expect(normalizeConfirmation('p u b 4 8 2 9 1 3')).toBe('PUB-482913');
+    expect(confirmation().placeholder).toBe('PUB-482913');
+    expect(confirmation().pattern).toBe('^PUB-\\d{6}$');
+    expect(confirmation().normalize).toBe('confirmation');
+  });
+
+  it('keeps a garbled value in uppercase and shows the format hint', () => {
+    const field = confirmation();
+    const result = interpretFieldInput(field, 'not a confirmation', []);
+    expect(result.value).toBe('NOT A CONFIRMATION');
+    expect(result.error).toBe('Enter a confirmation number like PUB-482913.');
+  });
+
+  it('accepts a messy confirmation once it is normalized', () => {
+    const field = confirmation();
+    expect(interpretFieldInput(field, 'P U B one two three four five six', []).error).toBeUndefined();
+    expect(interpretFieldInput(field, 'P U B one two three four five six', []).value).toBe('PUB-123456');
   });
 });
 

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { IntakeBrandBar } from '@/components/IntakeBrandBar';
 import { PayForm } from '@/components/PayForm';
 import { ScenarioCatalog } from '@/components/ScenarioCatalog';
-import { intakeThemeStyle } from '@/lib/intake-theme';
+import { intakeThemeClass, intakeThemeStyle } from '@/lib/intake-theme';
 import { absoluteTitle, scenarioTitle } from '@/lib/page-title';
 import { param, type SearchParams } from '@/lib/params';
 import { getScenario } from '@/scenarios';
@@ -19,7 +19,7 @@ export default async function PayPage({ searchParams }: { searchParams: Promise<
   const scenario = id ? getScenario(id) : undefined;
   if (!scenario) return <ScenarioCatalog missing={id || undefined} />;
   return (
-    <div className="intake-theme" style={intakeThemeStyle(scenario)}>
+    <div className={intakeThemeClass(scenario)} style={intakeThemeStyle(scenario)}>
       <IntakeBrandBar scenario={scenario} current="pay" />
       <section className="page-head">
         <div className="wrap">

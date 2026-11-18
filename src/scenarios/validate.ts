@@ -48,7 +48,7 @@ export function scenarioDescription(scenario: ScenarioConfig, fields: Record<str
 }
 
 export function scenarioSummary(scenario: ScenarioConfig, fields: Record<string, string>, category: string): string {
-  const who = fields.fullName?.trim() || 'A caller';
+  const who = fields.fullName?.trim() || fields.guestName?.trim() || 'A caller';
   const reason = (fields[scenario.summaryKey] ?? '').replace(/\s+/g, ' ').trim();
   const short = reason.length > 160 ? `${reason.slice(0, 157).trimEnd()}…` : reason;
   const ref = scenario.referenceKey ? fields[scenario.referenceKey] : '';

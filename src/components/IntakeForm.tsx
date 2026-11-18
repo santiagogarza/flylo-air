@@ -295,7 +295,7 @@ function IntakeSession({ scenario, onRestart }: { scenario: ScenarioConfig; onRe
         <p className="ref" data-testid="ticket-id">
           {ticketId}
         </p>
-        <p>{ui.successMessage(values)}</p>
+        <p>{ui.successMessage(values, ticketId)}</p>
         <div className="inline-actions">
           <button type="button" className="btn" onClick={onRestart}>
             {ui.restartLabel}

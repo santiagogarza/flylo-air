@@ -2499,3 +2499,223 @@ a.case-row:focus-visible {
     scroll-behavior: auto !important;
   }
 }
+
+/* PUBLIC Hotel: black, white, thin type, small uppercase eyebrows. Scoped so Lakeline stays teal. */
+
+body.intake-editorial-page {
+  background: #fff;
+  color: #111;
+}
+
+body.intake-editorial-page .site-footer {
+  background: #000;
+  color: #f3f3f3;
+}
+
+body.intake-editorial-page .sample-badge {
+  background: #fff;
+  color: #000;
+  border-radius: 0;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+}
+
+.intake-theme.intake-editorial {
+  --lk-brand: #000;
+  --lk-brand-dark: #000;
+  --lk-navy: #000;
+  --lk-mist: #f6f6f6;
+  --lk-mist-2: #ececec;
+  --lk-line: #e6e6e6;
+  --lk-ink-soft: #3f3f3f;
+  --lk-warn: #000;
+  --lk-warn-bg: #fff;
+  --lk-ring: 0 0 0 3px #fff, 0 0 0 5px #000;
+  --shadow-sm: none;
+  --shadow: none;
+  background: #fff;
+  color: #111;
+}
+
+.intake-theme.intake-editorial .intake-bar {
+  background: #fff;
+  border-bottom: 1px solid #000;
+}
+
+.intake-theme.intake-editorial .intake-mark {
+  display: none;
+}
+
+.intake-theme.intake-editorial .intake-wordmark-name {
+  font-weight: 400;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  font-size: 1.02rem;
+}
+
+.intake-theme.intake-editorial .intake-wordmark-sub {
+  margin-top: 0.2rem;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  color: #000;
+}
+
+.intake-theme.intake-editorial .intake-nav a {
+  border-radius: 0;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 0.68rem;
+  color: #111;
+}
+
+.intake-theme.intake-editorial .intake-nav a:hover,
+.intake-theme.intake-editorial .intake-nav a[aria-current='page'] {
+  color: #000;
+  background: #f3f3f3;
+}
+
+.intake-theme.intake-editorial .intake-sample {
+  color: #000;
+  background: #fff;
+  border: 1px solid #000;
+  border-radius: 0;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+}
+
+.intake-theme.intake-editorial .page-head {
+  background: #000;
+  padding: 3.25rem 0 2.6rem;
+}
+
+.intake-theme.intake-editorial .page-head h1 {
+  font-weight: 300;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-size: clamp(1.45rem, 2.6vw, 2.15rem);
+}
+
+.intake-theme.intake-editorial .page-head p,
+.intake-theme.intake-editorial .page-head a {
+  color: #f3f3f3;
+}
+
+.intake-theme.intake-editorial .eyebrow {
+  color: #000;
+  letter-spacing: 0.22em;
+  font-size: 0.68rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.intake-theme.intake-editorial .page-head .eyebrow {
+  color: #fff;
+}
+
+.intake-theme.intake-editorial .card,
+.intake-theme.intake-editorial .call-panel,
+.intake-theme.intake-editorial .demo-line,
+.intake-theme.intake-editorial .btn,
+.intake-theme.intake-editorial .ref,
+.intake-theme.intake-editorial .success-icon,
+.intake-theme.intake-editorial .action-bar,
+.intake-theme.intake-editorial input,
+.intake-theme.intake-editorial select,
+.intake-theme.intake-editorial textarea {
+  border-radius: 0;
+}
+
+.intake-theme.intake-editorial .card,
+.intake-theme.intake-editorial .call-panel {
+  box-shadow: none;
+  border-color: #111;
+}
+
+.intake-theme.intake-editorial .call-panel {
+  background: #fff;
+  border-top: 1px solid #111;
+  box-shadow: none;
+}
+
+.intake-theme.intake-editorial .demo-line {
+  background: #fff;
+  border: 1px solid #111;
+  color: #111;
+}
+
+.intake-theme.intake-editorial .card h2,
+.intake-theme.intake-editorial .field label {
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.intake-theme.intake-editorial .field label {
+  font-size: 0.68rem;
+}
+
+.intake-theme.intake-editorial .card h2 {
+  font-size: 0.95rem;
+  font-weight: 400;
+}
+
+.intake-theme.intake-editorial .how-steps li::before {
+  border-radius: 0;
+  background: #000;
+  font-weight: 500;
+}
+
+.intake-theme.intake-editorial .btn {
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: #000;
+  border-color: #000;
+  color: #fff;
+}
+
+.intake-theme.intake-editorial .btn:hover {
+  background: #222;
+  border-color: #222;
+  color: #fff;
+}
+
+.intake-theme.intake-editorial .btn-ghost {
+  background: #fff;
+  color: #000;
+  border-color: #000;
+}
+
+.intake-theme.intake-editorial .btn-ghost:hover {
+  background: #000;
+  color: #fff;
+}
+
+.intake-theme.intake-editorial .action-bar {
+  box-shadow: none;
+  border-top: 1px solid #000;
+  background: #fff;
+}
+
+.intake-theme.intake-editorial .field .filled-tag {
+  border-radius: 0;
+  background: #f3f3f3;
+  color: #000;
+  letter-spacing: 0.08em;
+}
+
+.intake-theme.intake-editorial .success-icon {
+  background: #000;
+  color: #fff;
+  box-shadow: none;
+}
+
+.intake-theme.intake-editorial .ref {
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+}

@@ -1,5 +1,14 @@
 /**
- * Sample variants. These are not registered and do not appear at /intake.
+ * PUBLIC Hotel guest services is registered as public-hotel and appears at /intake?scenario=public-hotel.
+ *   brandName: PUBLIC Hotel New York
+ *   persona: Santi Garza, santi.garza@flylo-air.com, confirmation PUB-482913
+ *   ticketPrefix: PUB-REQ-
+ *   greeting: "PUBLIC Hotel New York, guest services. How may I help?"
+ *   demoLine: Santi Garza, confirmation PUB-482913, Thursday check-in, two nights, late checkout, minibar charge, afternoons
+ *   webhook: { urlEnv: "PUBLIC_WEBHOOK_URL", keyEnv: "PUBLIC_WEBHOOK_KEY", headerEnv: "PUBLIC_WEBHOOK_HEADER" }
+ *   When PUBLIC_WEBHOOK_URL is unset, the ticket is still accepted and numbered PUB-REQ-####.
+ *
+ * Sample variants below are not registered and do not appear at /intake.
  * A new customer variant is one config file, one Grok Bot, and that bot's webhook routine.
  *
  * Copy lakeline-hardship.ts, then change the brand, fields, greeting, demo line, and webhook env names.

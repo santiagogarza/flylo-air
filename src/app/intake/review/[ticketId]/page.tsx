@@ -5,7 +5,7 @@ import { CaseActions } from '@/components/CaseActions';
 import { CaseOutputs, CaseTimeline } from '@/components/CaseWork';
 import { IntakeBrandBar } from '@/components/IntakeBrandBar';
 import { bandLabel, decisionLabel, formatWhen, statusLabel } from '@/lib/case-labels';
-import { intakeThemeStyle } from '@/lib/intake-theme';
+import { intakeThemeClass, intakeThemeStyle } from '@/lib/intake-theme';
 import { absoluteTitle, scenarioTitle } from '@/lib/page-title';
 import { POLICY_SECTIONS } from '@/lib/hardship-policy';
 import { param, type SearchParams } from '@/lib/params';
@@ -52,7 +52,7 @@ export default async function CasePage({
   const failed = item.rules.filter((rule) => rule.result === 'fail').length;
 
   return (
-    <div className="intake-theme" style={intakeThemeStyle(scenario)}>
+    <div className={intakeThemeClass(scenario)} style={intakeThemeStyle(scenario)}>
       <IntakeBrandBar scenario={scenario} current="review" />
       <section className="page-head case-head-band">
         <div className="wrap">
