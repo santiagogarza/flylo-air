@@ -7,6 +7,7 @@ const PAGES = [
   ['lakeline intake', LAKELINE_URL],
   ['intake catalog', '/intake'],
   ['unknown scenario', '/intake?scenario=nope'],
+  ['public hotel', '/intake?scenario=public-hotel'],
   ['pay', '/intake/pay?scenario=lakeline-hardship'],
 ] as const;
 

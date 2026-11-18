@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { EditorialTone } from '@/components/EditorialTone';
 import type { ScenarioConfig } from '@/scenarios/types';
 
 export type IntakeSection = 'request' | 'pay' | 'review' | 'policy';
@@ -15,6 +16,7 @@ export function IntakeBrandBar({ scenario, current }: { scenario: ScenarioConfig
   }
   return (
     <div className="intake-bar">
+      <EditorialTone editorial={scenario.appearance === 'editorial'} />
       <div className="wrap intake-bar-inner">
         <Link href={`/intake?scenario=${scenario.id}`} className="intake-wordmark">
           <span className="intake-mark" aria-hidden="true">
@@ -32,7 +34,7 @@ export function IntakeBrandBar({ scenario, current }: { scenario: ScenarioConfig
             </Link>
           ))}
         </nav>
-        <span className="intake-sample">Sample</span>
+        <span className="intake-sample">{scenario.badge ?? 'Sample'}</span>
       </div>
     </div>
   );

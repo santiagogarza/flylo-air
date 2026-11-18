@@ -5,6 +5,8 @@ export type WebhookTarget = {
   url?: string;
   headerName?: string;
   key?: string;
+  /** Accept the ticket when this scenario's URL env is unset, without calling out. */
+  demoWhenUnset?: boolean;
 };
 
 const ENV_NAME = /^[A-Z][A-Z0-9_]*$/;
@@ -34,6 +36,14 @@ export function resolveWebhook(webhook: ScenarioWebhook | undefined, env: Env): 
     key: readEnv(env, DEFAULT_WEBHOOK_ENV.keyEnv),
   };
   if (!webhook) return fallback;
+  if (webhook.demoWhenUnset) {
+    return {
+      url: readEnv(env, webhook.urlEnv),
+      headerName: readEnv(env, webhook.headerEnv),
+      key: readEnv(env, webhook.keyEnv),
+      demoWhenUnset: true,
+    };
+  }
   return {
     url: readEnv(env, webhook.urlEnv) ?? fallback.url,
     headerName: readEnv(env, webhook.headerEnv) ?? fallback.headerName,

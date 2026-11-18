@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { IntakeBrandBar } from '@/components/IntakeBrandBar';
 import { ScenarioCatalog } from '@/components/ScenarioCatalog';
-import { intakeThemeStyle } from '@/lib/intake-theme';
+import { intakeThemeClass, intakeThemeStyle } from '@/lib/intake-theme';
 import { absoluteTitle, scenarioTitle } from '@/lib/page-title';
 import { parsePolicy } from '@/lib/policy-doc';
 import { param, type SearchParams } from '@/lib/params';
@@ -23,7 +23,7 @@ export default async function PolicyPage({ searchParams }: { searchParams: Promi
   const markdown = scenario.policyFile ? readScenarioFile(scenario.policyFile) : null;
   if (!markdown) {
     return (
-      <div className="intake-theme" style={intakeThemeStyle(scenario)}>
+      <div className={intakeThemeClass(scenario)} style={intakeThemeStyle(scenario)}>
         <IntakeBrandBar scenario={scenario} current="policy" />
         <section className="page-head">
           <div className="wrap">
@@ -41,7 +41,7 @@ export default async function PolicyPage({ searchParams }: { searchParams: Promi
   const headings = blocks.filter((block) => block.type === 'heading');
 
   return (
-    <div className="intake-theme" style={intakeThemeStyle(scenario)}>
+    <div className={intakeThemeClass(scenario)} style={intakeThemeStyle(scenario)}>
       <IntakeBrandBar scenario={scenario} current="policy" />
       <section className="page-head">
         <div className="wrap">

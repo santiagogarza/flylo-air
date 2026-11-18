@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { IntakeBrandBar } from '@/components/IntakeBrandBar';
 import { ScenarioCatalog } from '@/components/ScenarioCatalog';
 import { bandLabel, decisionLabel, statusLabel } from '@/lib/case-labels';
-import { intakeThemeStyle } from '@/lib/intake-theme';
+import { intakeThemeClass, intakeThemeStyle } from '@/lib/intake-theme';
 import { absoluteTitle, scenarioTitle } from '@/lib/page-title';
 import { param, type SearchParams } from '@/lib/params';
 import { getScenario } from '@/scenarios';
@@ -37,7 +37,7 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
   const counts = Object.fromEntries(STATUSES.map((item) => [item.id, item.id ? all.filter((entry) => entry.status === item.id).length : all.length]));
 
   return (
-    <div className="intake-theme" style={intakeThemeStyle(scenario)}>
+    <div className={intakeThemeClass(scenario)} style={intakeThemeStyle(scenario)}>
       <IntakeBrandBar scenario={scenario} current="review" />
       <section className="page-head">
         <div className="wrap">

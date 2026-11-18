@@ -203,6 +203,10 @@ function asFieldMap(value: unknown): Record<string, string> {
 async function deliver(id: string, body: string, target: WebhookTarget, ctx: ServerContext): Promise<boolean> {
   const { url, headerName, key } = target;
   if (!url || !headerName || !key) {
+    if (target.demoWhenUnset && !url) {
+      ctx.log('ticket accepted in demo mode', id);
+      return true;
+    }
     ctx.log('support webhook skipped: not configured', id);
     return false;
   }

@@ -1,8 +1,9 @@
 import { flyloSupport } from './flylo-support';
 import { lakelineHardship } from './lakeline-hardship';
+import { publicHotel } from './public-hotel';
 import type { ScenarioConfig } from './types';
 
-const SCENARIOS: readonly ScenarioConfig[] = [flyloSupport, lakelineHardship];
+const SCENARIOS: readonly ScenarioConfig[] = [flyloSupport, lakelineHardship, publicHotel];
 
 export function listScenarios(): ScenarioConfig[] {
   return [...SCENARIOS];
